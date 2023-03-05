@@ -1,6 +1,6 @@
 const Product = require('../models/productModel');
 const Booking = require('../models/bookingModel');
-const catchAsync = require('../utils/catchAsync');
+import { catchAsync } from '../utils/catchAsync';
 const factory = require('./handlerFactory');
 
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {

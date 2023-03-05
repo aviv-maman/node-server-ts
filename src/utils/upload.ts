@@ -1,10 +1,11 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { NextFunction } from 'express';
-const { options } = require('../configs/cloudinary');
+import { NextFunction, Request } from 'express';
+import { cloudinaryOptions } from '../configs/cloudinary';
 import { AppError } from './appError';
 
 exports.uploadImageToCloudinary = async (req: Request, next: NextFunction) => {
-  const { apiKey, apiSecret, cloudName, uploadFolder, resourceType } = options;
+  const { apiKey, apiSecret, cloudName, uploadFolder, resourceType } =
+    cloudinaryOptions;
 
   cloudinary.config({
     cloud_name: cloudName,

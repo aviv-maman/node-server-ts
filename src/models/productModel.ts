@@ -34,7 +34,7 @@ const productSchema = new Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
-      set: (val) => Math.round(val * 10) / 10, // 4.666666, 46.6666, 47, 4.7
+      set: (val: number) => Math.round(val * 10) / 10, // 4.666666, 46.6666, 47, 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -43,12 +43,15 @@ const productSchema = new Schema(
     price: {
       type: Object,
       required: true,
-      validate: [(value) => value.length > 0, 'A product must have a price'],
+      validate: [
+        (value: number) => value.length > 0,
+        'A product must have a price',
+      ],
     },
     priceDiscount: {
       type: Number,
       validate: {
-        validator: function (val) {
+        validator: function (val: number) {
           // this only points to current doc on NEW document creation
           return val < this.price;
         },
@@ -88,7 +91,7 @@ const productSchema = new Schema(
     },
     guides: [
       {
-        type: mongoose.Schema.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
       },
     ],

@@ -1,4 +1,4 @@
-const catchAsync = require('../utils/catchAsync');
+import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 const APIFeatures = require('../utils/apiFeatures');
 

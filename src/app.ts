@@ -1,5 +1,5 @@
 const path = require('path');
-import express from 'express';
+import express, { Application } from 'express';
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -9,14 +9,14 @@ const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-const AppError = require('./utils/appError');
+import { AppError } from './utils/appError';
 const globalErrorHandler = require('./controllers/errorController');
 const productRouter = require('./routes/productRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
 
-const app = express();
+const app: Application = express();
 
 // 1) GLOBAL MIDDLEWARES
 // Implement CORS

@@ -3,7 +3,7 @@ const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/userModel');
-const catchAsync = require('../utils/catchAsync');
+import { catchAsync } from '../utils/catchAsync';
 const AppError = require('../utils/appError');
 const sendEmail = require('../utils/email');
 

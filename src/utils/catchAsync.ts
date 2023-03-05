@@ -1,5 +1,7 @@
-import { NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-module.exports = (fn) => (req: Request, res: Response, next: NextFunction) => {
-  fn(req, res, next).catch(next);
-};
+export const catchAsync =
+  async (fn: (req: Request, res: Response, next: NextFunction) => any) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    fn(req, res, next).catch(next);
+  };

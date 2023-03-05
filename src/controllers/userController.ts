@@ -1,8 +1,9 @@
-const multer = require('multer');
+import multer from 'multer';
 const sharp = require('sharp');
 const User = require('../models/userModel');
-const catchAsync = require('../utils/catchAsync');
+import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
+import { NextFunction, Request, Response } from 'express';
 const factory = require('./handlerFactory');
 const { uploadImageToCloudinary } = require('../utils/upload');
 
@@ -17,7 +18,7 @@ const { uploadImageToCloudinary } = require('../utils/upload');
 // });
 const multerStorage = multer.memoryStorage();
 
-const multerFilter = (req, file, cb) => {
+const multerFilter = (req: Request, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
@@ -63,7 +64,7 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-exports.getMe = (req, res, next) => {
+exports.getMe = (req: Request, res: Response, next: NextFunction) => {
   req.params.id = req.user.id;
   next();
 };
@@ -119,7 +120,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = (req, res) => {
+exports.createUser = (req: Request, res: Response) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not yet defined! Please use /signup instead',

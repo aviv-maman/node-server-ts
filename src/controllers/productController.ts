@@ -1,13 +1,14 @@
 const multer = require('multer');
 const sharp = require('sharp');
 const product = require('../models/productModel');
-const catchAsync = require('../utils/catchAsync');
+import { catchAsync } from '../utils/catchAsync';
 const factory = require('./handlerFactory');
+import { Request } from 'express';
 import { AppError } from '../utils/appError';
 
 const multerStorage = multer.memoryStorage();
 
-const multerFilter = (req, file, cb) => {
+const multerFilter = (req: Request, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
