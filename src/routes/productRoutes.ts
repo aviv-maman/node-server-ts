@@ -1,9 +1,9 @@
-const express = require('express');
+import { Router } from 'express';
 const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
 const reviewRouter = require('./reviewRoutes');
 
-const router = express.Router();
+const router = Router();
 
 // router.param('id', productController.checkID);
 

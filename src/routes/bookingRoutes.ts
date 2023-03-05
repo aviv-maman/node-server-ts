@@ -1,8 +1,8 @@
-const express = require('express');
+import { Router } from 'express';
 const bookingController = require('../controllers/bookingController');
 const authController = require('../controllers/authController');
 
-const router = express.Router();
+const router = Router();
 
 router.use(authController.protect);
 
