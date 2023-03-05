@@ -1,8 +1,9 @@
-const cloudinary = require('cloudinary').v2;
+import { v2 as cloudinary } from 'cloudinary';
+import { NextFunction } from 'express';
 const { options } = require('../configs/cloudinary');
-const AppError = require('./appError');
+import { AppError } from './appError';
 
-exports.uploadImageToCloudinary = async (req, next) => {
+exports.uploadImageToCloudinary = async (req: Request, next: NextFunction) => {
   const { apiKey, apiSecret, cloudName, uploadFolder, resourceType } = options;
 
   cloudinary.config({

@@ -1,9 +1,9 @@
 const crypto = require('crypto');
-const mongoose = require('mongoose');
+import { model, Schema } from 'mongoose';
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema(
+const userSchema = new Schema(
   {
     firstName: {
       type: String,
@@ -205,6 +205,6 @@ userSchema.methods.createNewEmailToken = function () {
   return NewEmailToken;
 };
 
-const User = mongoose.model('User', userSchema);
+const User = model('User', userSchema);
 
 module.exports = User;

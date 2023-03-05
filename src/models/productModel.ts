@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+import { model, Schema } from 'mongoose';
 const slugify = require('slugify');
 // const User = require('./userModel');
 // const validator = require('validator');
 
-const productSchema = new mongoose.Schema(
+const productSchema = new Schema(
   {
     name: {
       type: String,
@@ -176,6 +176,6 @@ productSchema.pre(/^find/, function (next) {
 //   next();
 // });
 
-const product = mongoose.model('product', productSchema);
+const Product = model('Product', productSchema);
 
-module.exports = product;
+module.exports = Product;

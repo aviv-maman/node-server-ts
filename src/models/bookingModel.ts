@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+import { model, Schema } from 'mongoose';
 
-const bookingSchema = new mongoose.Schema({
+const bookingSchema = new Schema({
   product: {
-    type: mongoose.Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Product',
     required: [true, 'Booking must belong to a product!'],
   },
   user: {
-    type: mongoose.Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Booking must belong to a User!'],
   },
@@ -33,6 +33,6 @@ bookingSchema.pre(/^find/, function (next) {
   next();
 });
 
-const Booking = mongoose.model('Booking', bookingSchema);
+const Booking = model('Booking', bookingSchema);
 
 module.exports = Booking;

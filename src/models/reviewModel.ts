@@ -1,8 +1,8 @@
 // review / rating / createdAt / ref to product / ref to user
-const mongoose = require('mongoose');
+import { model, Schema } from 'mongoose';
 const Product = require('./productModel');
 
-const reviewSchema = new mongoose.Schema(
+const reviewSchema = new Schema(
   {
     review: {
       type: String,
@@ -18,12 +18,12 @@ const reviewSchema = new mongoose.Schema(
       default: Date.now(),
     },
     product: {
-      type: mongoose.Schema.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'Product',
       required: [true, 'Review must belong to a product.'],
     },
     user: {
-      type: mongoose.Schema.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Review must belong to a user'],
     },
@@ -103,6 +103,6 @@ reviewSchema.post(/^findOneAnd/, async function () {
   await this.r.constructor.calcAverageRatings(this.r.product);
 });
 
-const Review = mongoose.model('Review', reviewSchema);
+const Review = model('Review', reviewSchema);
 
 module.exports = Review;
