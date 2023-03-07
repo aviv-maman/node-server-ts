@@ -1,4 +1,5 @@
 import { model, Schema } from 'mongoose';
+import type { InferSchemaType } from 'mongoose';
 
 const bookingSchema = new Schema({
   product: {
@@ -33,6 +34,7 @@ bookingSchema.pre(/^find/, function (next) {
   next();
 });
 
+export type Booking = InferSchemaType<typeof bookingSchema>;
 const Booking = model('Booking', bookingSchema);
 
 module.exports = Booking;

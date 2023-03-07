@@ -1,7 +1,13 @@
 const Product = require('../models/productModel');
 const Booking = require('../models/bookingModel');
 import { catchAsync } from '../utils/catchAsync';
-const factory = require('./handlerFactory');
+import {
+  createOne,
+  deleteOne,
+  getAll,
+  getOne,
+  updateOne,
+} from './handlerFactory';
 
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   // 1) Get the currently booked product
@@ -26,8 +32,8 @@ exports.createBookingCheckout = catchAsync(async (req, res, next) => {
   res.redirect(req.originalUrl.split('?')[0]);
 });
 
-exports.createBooking = factory.createOne(Booking);
-exports.getBooking = factory.getOne(Booking);
-exports.getAllBookings = factory.getAll(Booking);
-exports.updateBooking = factory.updateOne(Booking);
-exports.deleteBooking = factory.deleteOne(Booking);
+export const createBooking = createOne(Booking);
+export const getBooking = getOne(Booking);
+export const getAllBookings = getAll(Booking);
+export const updateBooking = updateOne(Booking);
+export const deleteBooking = deleteOne(Booking);

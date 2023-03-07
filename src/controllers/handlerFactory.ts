@@ -1,8 +1,13 @@
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
+import { Model } from 'mongoose';
+import type { User } from '../models/userModel';
+import type { Product } from '../models/productModel';
+import type { Review } from '../models/reviewModel';
+import type { Booking } from '../models/bookingModel';
 const APIFeatures = require('../utils/apiFeatures');
 
-exports.deleteOne = (Model) =>
+export const deleteOne = (Model: Model<User | Product | Review | Booking>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 
@@ -16,7 +21,7 @@ exports.deleteOne = (Model) =>
     });
   });
 
-exports.updateOne = (Model) =>
+export const updateOne = (Model: Model<User | Product | Review | Booking>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true, // To send back the updated object
@@ -33,7 +38,7 @@ exports.updateOne = (Model) =>
     });
   });
 
-exports.createOne = (Model) =>
+export const createOne = (Model: Model<User | Product | Review | Booking>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
 
@@ -43,10 +48,24 @@ exports.createOne = (Model) =>
     });
   });
 
-exports.getOne = (Model, popOptions) =>
+export const getOne = (
+  Model: Model<User | Product | Review | Booking>,
+  popOptions?: {
+    path?: string; //children
+    select?: string | any;
+    model?: string;
+    match?: any;
+  }
+) =>
   catchAsync(async (req, res, next) => {
     let query = Model.findById(req.params.id);
-    if (popOptions) query = query.populate(popOptions);
+    if (popOptions)
+      query = query.populate({
+        path: popOptions.path ?? '',
+        select: popOptions.select ?? '',
+        model: popOptions.model ?? '',
+        match: popOptions.match ?? '',
+      });
     const doc = await query;
 
     if (!doc) {
@@ -59,7 +78,7 @@ exports.getOne = (Model, popOptions) =>
     });
   });
 
-exports.getAll = (Model) =>
+export const getAll = (Model: Model<User | Product | Review | Booking>) =>
   catchAsync(async (req, res, next) => {
     // To allow for nested GET reviews on product (hack)
     let filter = {};

@@ -4,7 +4,7 @@ const User = require('../models/userModel');
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { NextFunction, Request, Response } from 'express';
-const factory = require('./handlerFactory');
+import { deleteOne, getAll, getOne, updateOne } from './handlerFactory';
 const { uploadImageToCloudinary } = require('../utils/upload');
 
 // const multerStorage = multer.diskStorage({
@@ -127,9 +127,9 @@ exports.createUser = (req: Request, res: Response) => {
   });
 };
 
-exports.getUser = factory.getOne(User);
-exports.getAllUsers = factory.getAll(User);
+export const getUser = getOne(User);
+export const getAllUsers = getAll(User);
 
 // Do NOT update passwords with this!
-exports.updateUser = factory.updateOne(User);
-exports.deleteUser = factory.deleteOne(User);
+export const updateUser = updateOne(User);
+export const deleteUser = deleteOne(User);

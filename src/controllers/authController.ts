@@ -1,10 +1,11 @@
 import crypto from 'crypto';
-const { promisify } = require('util');
+import { Response } from 'express';
+import { promisify } from 'util';
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/userModel');
 import { catchAsync } from '../utils/catchAsync';
-const AppError = require('../utils/appError');
+import { AppError } from '../utils/appError';
 const sendEmail = require('../utils/email');
 
 const signToken = (id: string) =>
@@ -12,13 +13,15 @@ const signToken = (id: string) =>
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, res: Response) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+      Date.now() +
+        Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
+    secure: false,
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
@@ -207,8 +210,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
     );
   }
 });
@@ -347,9 +352,9 @@ exports.sendVerificationEmail = catchAsync(async (req, res, next) => {
 
     return next(
       new AppError(
-        'There was an error sending the verification email. Try again later!'
-      ),
-      500
+        'There was an error sending the verification email. Try again later!',
+        500
+      )
     );
   }
 });

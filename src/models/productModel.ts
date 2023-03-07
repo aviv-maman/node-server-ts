@@ -1,4 +1,5 @@
 import { model, Schema } from 'mongoose';
+import type { InferSchemaType } from 'mongoose';
 const slugify = require('slugify');
 // const User = require('./userModel');
 // const validator = require('validator');
@@ -103,8 +104,6 @@ const productSchema = new Schema(
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
-  {
     timestamps: true, // add updatedAt
   }
 );
@@ -179,6 +178,7 @@ productSchema.pre(/^find/, function (next) {
 //   next();
 // });
 
+export type Product = InferSchemaType<typeof productSchema>;
 const Product = model('Product', productSchema);
 
 module.exports = Product;

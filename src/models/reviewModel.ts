@@ -1,5 +1,6 @@
 // review / rating / createdAt / ref to product / ref to user
 import { model, Schema } from 'mongoose';
+import type { InferSchemaType } from 'mongoose';
 const Product = require('./productModel');
 
 const reviewSchema = new Schema(
@@ -103,6 +104,7 @@ reviewSchema.post(/^findOneAnd/, async function () {
   await this.r.constructor.calcAverageRatings(this.r.product);
 });
 
+export type Review = InferSchemaType<typeof reviewSchema>;
 const Review = model('Review', reviewSchema);
 
 module.exports = Review;

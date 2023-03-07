@@ -10,7 +10,11 @@ declare module 'perfect-express-sanitizer' {
       level: any;
     }
   ): any;
-  function clean(options?: {}, whiteList?: any[], only?: string[]): (req: any, res: any, next: any) => void;
+  function clean(
+    options?: {},
+    whiteList?: any[],
+    only?: string[]
+  ): (req: any, res: any, next: any) => void;
 }
 
 declare module 'xss-clean' {
@@ -20,5 +24,6 @@ declare module 'xss-clean' {
 declare namespace Express {
   interface Request {
     requestTime?: string;
+    user?: any;
   }
 }

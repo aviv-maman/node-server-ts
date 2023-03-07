@@ -1,5 +1,11 @@
 const Review = require('../models/reviewModel');
-const factory = require('./handlerFactory');
+import {
+  createOne,
+  deleteOne,
+  getAll,
+  getOne,
+  updateOne,
+} from './handlerFactory';
 // const catchAsync = require('./../utils/catchAsync');
 
 exports.setProductUserIds = (req, res, next) => {
@@ -9,8 +15,8 @@ exports.setProductUserIds = (req, res, next) => {
   next();
 };
 
-exports.getAllReviews = factory.getAll(Review);
-exports.getReview = factory.getOne(Review);
-exports.createReview = factory.createOne(Review);
-exports.updateReview = factory.updateOne(Review);
-exports.deleteReview = factory.deleteOne(Review);
+export const getAllReviews = getAll(Review);
+export const getReview = getOne(Review);
+export const createReview = createOne(Review);
+export const updateReview = updateOne(Review);
+export const deleteReview = deleteOne(Review);

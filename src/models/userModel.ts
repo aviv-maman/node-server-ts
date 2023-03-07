@@ -1,7 +1,8 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 import { model, Schema } from 'mongoose';
-const validator = require('validator');
-const bcrypt = require('bcryptjs');
+import type { InferSchemaType } from 'mongoose';
+import validator from 'validator';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new Schema(
   {
@@ -48,7 +49,7 @@ const userSchema = new Schema(
       required: [true, 'Please confirm your password'],
       validate: {
         // This only works on CREATE and SAVE!!! So on updating a user, we need to use Save as well and not findOneAndUpdate
-        validator: function (element) {
+        validator: function (element: string) {
           return element === this.password;
         },
         message: 'Passwords are not the same!',
@@ -106,7 +107,6 @@ const userSchema = new Schema(
     },
     googleId: {
       type: String,
-      // select: false,
     },
   },
   {
@@ -122,14 +122,14 @@ userSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, 12);
 
   // Delete passwordConfirm field
-  this.passwordConfirm = undefined;
+  this.set('passwordConfirm', undefined);
   next();
 });
 
 userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
-  this.passwordChangedAt = Date.now() - 1000; //Subtract 1 second to make sure the token is created before the password was changed
+  this.passwordChangedAt = new Date(Date.now() - 1000); //Subtract 1 second to make sure the token is created before the password was changed
   next();
 });
 
@@ -140,8 +140,8 @@ userSchema.pre(/^find/, function (next) {
 });
 
 userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userPassword
+  candidatePassword: string,
+  userPassword: string
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
@@ -205,6 +205,7 @@ userSchema.methods.createNewEmailToken = function () {
   return NewEmailToken;
 };
 
+export type User = InferSchemaType<typeof userSchema>;
 const User = model('User', userSchema);
 
 module.exports = User;

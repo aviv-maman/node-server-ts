@@ -2,7 +2,13 @@ const multer = require('multer');
 const sharp = require('sharp');
 const product = require('../models/productModel');
 import { catchAsync } from '../utils/catchAsync';
-const factory = require('./handlerFactory');
+import {
+  createOne,
+  deleteOne,
+  getAll,
+  getOne,
+  updateOne,
+} from './handlerFactory';
 import { Request } from 'express';
 import { AppError } from '../utils/appError';
 
@@ -67,11 +73,11 @@ exports.aliasTopProducts = (req, res, next) => {
   next();
 };
 
-exports.getAllProducts = factory.getAll(product);
-exports.getProduct = factory.getOne(product, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
-exports.createProduct = factory.createOne(product);
-exports.updateProduct = factory.updateOne(product);
-exports.deleteProduct = factory.deleteOne(product);
+export const getAllProducts = getAll(product);
+export const getProduct = getOne(product, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
+export const createProduct = createOne(product);
+export const updateProduct = updateOne(product);
+export const deleteProduct = deleteOne(product);
 
 exports.getProductStats = catchAsync(async (req, res, next) => {
   const stats = await product.aggregate([
