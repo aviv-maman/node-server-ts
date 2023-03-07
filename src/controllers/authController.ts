@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { promisify } from 'util';
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -13,7 +13,7 @@ const signToken = (id: string) =>
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-const createSendToken = (user, statusCode, res: Response) => {
+const createSendToken = (user, statusCode: number, res: Response) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
@@ -37,7 +37,7 @@ const createSendToken = (user, statusCode, res: Response) => {
   });
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
+export const signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -49,7 +49,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   createSendToken(newUser, 201, res);
 });
 
-exports.login = catchAsync(async (req, res, next) => {
+export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   // 1) Check if email and password exist
@@ -67,7 +67,7 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-exports.logout = (req, res) => {
+export const logout = (req: Request, res: Response) => {
   // res.cookie('jwt', 'logged_out', {
   //   expires: new Date(Date.now() + 10 * 1000),
   //   httpOnly: true,
@@ -76,7 +76,7 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
-exports.protect = catchAsync(async (req, res, next) => {
+export const protect = catchAsync(async (req, res, next) => {
   // 1) Getting token and check of it's there
   let token;
   if (
@@ -122,7 +122,11 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 // Only for rendered pages, no errors!
-exports.isLoggedIn = async (req, res, next) => {
+export const isLoggedIn = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   if (req.cookies.jwt) {
     try {
       // 1) verify token
@@ -152,9 +156,9 @@ exports.isLoggedIn = async (req, res, next) => {
   next();
 };
 
-exports.restrictTo =
+export const restrictTo =
   (...roles) =>
-  (req, res, next) => {
+  (req: Request, res: Response, next: NextFunction) => {
     // roles ['admin', 'lead-guide']. role='user'
     if (!roles.includes(req.user.role)) {
       return next(
@@ -165,7 +169,7 @@ exports.restrictTo =
     next();
   };
 
-exports.forgotPassword = catchAsync(async (req, res, next) => {
+export const forgotPassword = catchAsync(async (req, res, next) => {
   if (!req.body.email) {
     return next(new AppError('Email address was not specified.', 400));
   }
@@ -218,7 +222,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {
+export const resetPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
@@ -245,7 +249,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-exports.updatePassword = catchAsync(async (req, res, next) => {
+export const updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
 
@@ -264,7 +268,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-exports.verifyEmail = catchAsync(async (req, res, next) => {
+export const verifyEmail = catchAsync(async (req, res, next) => {
   // const { token } = req.params;
   // 1) Get user based on the token
   const hashedToken = crypto
@@ -302,7 +306,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.sendVerificationEmail = catchAsync(async (req, res, next) => {
+export const sendVerificationEmail = catchAsync(async (req, res, next) => {
   if (!req.body.email) {
     return next(new AppError('Email address was not specified.', 400));
   }
@@ -359,7 +363,7 @@ exports.sendVerificationEmail = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.sendNewAddressEmail = catchAsync(async (req, res, next) => {
+export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
   if (!req.body.currentEmail || !req.body.newEmail) {
     return next(
       new AppError(
@@ -441,14 +445,14 @@ exports.sendNewAddressEmail = catchAsync(async (req, res, next) => {
 
     return next(
       new AppError(
-        'There was an error sending the verification of new email. Try again later!'
-      ),
-      500
+        'There was an error sending the verification of new email. Try again later!',
+        500
+      )
     );
   }
 });
 
-exports.changeEmail = catchAsync(async (req, res, next) => {
+export const changeEmail = catchAsync(async (req, res, next) => {
   // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
@@ -478,7 +482,7 @@ exports.changeEmail = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.googleLogin = catchAsync(async (req, res, next) => {
+export const googleLogin = catchAsync(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   async function verify() {
     const ticket = await client.verifyIdToken({
