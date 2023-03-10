@@ -94,7 +94,7 @@ const sendErrorProd = (err: AppError, req: Request, res: Response) => {
   });
 };
 
-module.exports = (
+export const globalErrorHandler = (
   err: AppError | MongooseError.CastError | MongoServerError,
   req: Request,
   res: Response,

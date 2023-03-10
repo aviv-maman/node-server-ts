@@ -10,7 +10,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 import { AppError } from './utils/appError';
-const globalErrorHandler = require('./controllers/errorController');
+import { globalErrorHandler } from './controllers/errorController';
 const productRouter = require('./routes/productRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
