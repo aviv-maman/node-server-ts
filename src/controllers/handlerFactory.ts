@@ -1,13 +1,9 @@
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { Model } from 'mongoose';
-import type { User } from '../models/userModel';
-import type { Product } from '../models/productModel';
-import type { Review } from '../models/reviewModel';
-import type { Booking } from '../models/bookingModel';
 const APIFeatures = require('../utils/apiFeatures');
 
-export const deleteOne = (Model: Model<User | Product | Review | Booking>) =>
+export const deleteOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 
@@ -21,7 +17,7 @@ export const deleteOne = (Model: Model<User | Product | Review | Booking>) =>
     });
   });
 
-export const updateOne = (Model: Model<User | Product | Review | Booking>) =>
+export const updateOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true, // To send back the updated object
@@ -38,7 +34,7 @@ export const updateOne = (Model: Model<User | Product | Review | Booking>) =>
     });
   });
 
-export const createOne = (Model: Model<User | Product | Review | Booking>) =>
+export const createOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
 
@@ -49,7 +45,7 @@ export const createOne = (Model: Model<User | Product | Review | Booking>) =>
   });
 
 export const getOne = (
-  Model: Model<User | Product | Review | Booking>,
+  Model: Model<any>,
   popOptions?: {
     path?: string; //children
     select?: string | any;
@@ -78,7 +74,7 @@ export const getOne = (
     });
   });
 
-export const getAll = (Model: Model<User | Product | Review | Booking>) =>
+export const getAll = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     // To allow for nested GET reviews on product (hack)
     let filter = {};

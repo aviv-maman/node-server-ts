@@ -179,6 +179,4 @@ productSchema.pre(/^find/, function (next) {
 // });
 
 export type Product = InferSchemaType<typeof productSchema>;
-const Product = model('Product', productSchema);
-
-module.exports = Product;
+export const ProductModel = model('Product', productSchema);

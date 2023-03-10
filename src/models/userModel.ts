@@ -206,6 +206,4 @@ userSchema.methods.createNewEmailToken = function () {
 };
 
 export type User = InferSchemaType<typeof userSchema>;
-const User = model('User', userSchema);
-
-module.exports = User;
+export const UserModel = model('User', userSchema);

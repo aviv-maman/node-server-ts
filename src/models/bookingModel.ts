@@ -35,6 +35,4 @@ bookingSchema.pre(/^find/, function (next) {
 });
 
 export type Booking = InferSchemaType<typeof bookingSchema>;
-const Booking = model('Booking', bookingSchema);
-
-module.exports = Booking;
+export const BookingModel = model('Booking', bookingSchema);

@@ -21,18 +21,19 @@ declare module 'xss-clean' {
   function xss(): void;
 }
 
-interface File {
-  mimetype: string;
-  size: number;
-  filename: string;
-  path: string;
-  publicPath?: string;
-}
+// interface File {
+//   publicPath?: string;
+// }
 
 declare namespace Express {
+  declare namespace Multer {
+    interface File {
+      publicPath?: string;
+    }
+  }
   interface Request {
     requestTime?: string;
     user?: any;
-    file?: File;
+    file?: Express.Multer.File;
   }
 }

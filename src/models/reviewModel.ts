@@ -105,6 +105,4 @@ reviewSchema.post(/^findOneAnd/, async function () {
 });
 
 export type Review = InferSchemaType<typeof reviewSchema>;
-const Review = model('Review', reviewSchema);
-
-module.exports = Review;
+export const ReviewModel = model('Review', reviewSchema);

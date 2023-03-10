@@ -1,15 +1,16 @@
 import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { promisify } from 'util';
-const jwt = require('jsonwebtoken');
+import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
+import type { JwtPayload } from 'jsonwebtoken';
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/userModel');
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
-const sendEmail = require('../utils/email');
+import { sendEmail } from '../utils/email';
 
 const signToken = (id: string) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
+  jwtSign({ id }, process.env.JWT_SECRET ?? '', {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
@@ -34,6 +35,18 @@ const createSendToken = (user, statusCode: number, res: Response) => {
     success: true,
     token,
     user,
+  });
+};
+
+const verifyToken = async (
+  token: string,
+  secret: string
+): Promise<JwtPayload> => {
+  return new Promise((resolve, reject) => {
+    jwtVerify(token, secret, (err, decoded) => {
+      if (err) return reject(err);
+      resolve(decoded as JwtPayload);
+    });
   });
 };
 
@@ -95,7 +108,7 @@ export const protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await verifyToken(token, process.env.JWT_SECRET ?? '');
 
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
@@ -130,9 +143,9 @@ export const isLoggedIn = async (
   if (req.cookies.jwt) {
     try {
       // 1) verify token
-      const decoded = await promisify(jwt.verify)(
+      const decoded = await verifyToken(
         req.cookies.jwt,
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET ?? ''
       );
 
       // 2) Check if user still exists
@@ -199,9 +212,9 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
   try {
     await sendEmail({
-      email: user.email,
+      to: user.email,
       subject: 'Your password reset token (valid for 10 min)',
-      message,
+      text: message,
     });
 
     res.status(200).json({
@@ -340,9 +353,9 @@ export const sendVerificationEmail = catchAsync(async (req, res, next) => {
 
   try {
     await sendEmail({
-      email: user.email,
+      to: user.email,
       subject: 'Verify Your Email (Valid for 60 Minutes)',
-      message,
+      text: message,
     });
 
     res.status(200).json({
@@ -428,9 +441,9 @@ export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
 
   try {
     await sendEmail({
-      email: user.candidateEmail,
+      to: user.candidateEmail,
       subject: 'Verify Your New Email (Valid for 60 Minutes)',
-      message,
+      text: message,
     });
 
     res.status(200).json({

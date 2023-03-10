@@ -1,6 +1,6 @@
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 const sharp = require('sharp');
-const User = require('../models/userModel');
+import { UserModel } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { NextFunction, Request, Response } from 'express';
@@ -18,11 +18,15 @@ const { uploadImageToCloudinary } = require('../utils/upload');
 // });
 const multerStorage = multer.memoryStorage();
 
-const multerFilter = (req: Request, file, cb) => {
+const multerFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
+    return new AppError('Not an image! Please upload only images.', 400);
   }
 };
 
@@ -56,8 +60,8 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
   next();
 });
 
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
+const filterObj = (obj: Request['body'], ...allowedFields: string[]) => {
+  const newObj = {} as any;
   Object.keys(obj).forEach((el) => {
     if (allowedFields.includes(el)) newObj[el] = obj[el];
   });
@@ -100,10 +104,14 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.file) filteredBody.photo = req.file.publicPath;
 
   // 3) Update user document
-  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedUser = await UserModel.findByIdAndUpdate(
+    req.user.id,
+    filteredBody,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   res.status(200).json({
     success: true,
@@ -112,7 +120,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.user.id, { active: false });
+  await UserModel.findByIdAndUpdate(req.user.id, { active: false });
 
   res.status(204).json({
     status: 'success',
@@ -127,9 +135,9 @@ exports.createUser = (req: Request, res: Response) => {
   });
 };
 
-export const getUser = getOne(User);
-export const getAllUsers = getAll(User);
+export const getUser = getOne(UserModel);
+export const getAllUsers = getAll(UserModel);
 
 // Do NOT update passwords with this!
-export const updateUser = updateOne(User);
-export const deleteUser = deleteOne(User);
+export const updateUser = updateOne(UserModel);
+export const deleteUser = deleteOne(UserModel);
