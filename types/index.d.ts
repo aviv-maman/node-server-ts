@@ -21,9 +21,18 @@ declare module 'xss-clean' {
   function xss(): void;
 }
 
+interface File {
+  mimetype: string;
+  size: number;
+  filename: string;
+  path: string;
+  publicPath?: string;
+}
+
 declare namespace Express {
   interface Request {
     requestTime?: string;
     user?: any;
+    file?: File;
   }
 }

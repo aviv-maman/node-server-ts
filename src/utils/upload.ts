@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary';
+import { UploadApiOptions, v2 as cloudinary } from 'cloudinary';
 import { NextFunction, Request } from 'express';
 import { cloudinaryOptions } from '../configs/cloudinary';
 import { AppError } from './appError';
@@ -16,21 +16,21 @@ exports.uploadImageToCloudinary = async (req: Request, next: NextFunction) => {
 
   const uploadOptions = {
     folder: uploadFolder,
-    public_id: req.body.publicId || req.file.filename,
+    public_id: req.body.publicId || req?.file?.filename,
     resource_type: resourceType,
     overwrite: true,
-  };
+  } as UploadApiOptions;
 
   try {
     await cloudinary.uploader.upload(
-      req.file.path,
+      req?.file?.path ?? '/',
       uploadOptions,
       (error, result) => {
         if (error) {
           const stringifiedError = JSON.stringify(error, null, 2);
           return next(new AppError(stringifiedError, 400));
         }
-        if (result) {
+        if (result && req.file) {
           req.file.publicPath = result.secure_url;
         }
       }

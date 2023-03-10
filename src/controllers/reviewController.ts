@@ -1,4 +1,5 @@
 const Review = require('../models/reviewModel');
+import { NextFunction, Request, Response } from 'express';
 import {
   createOne,
   deleteOne,
@@ -8,7 +9,11 @@ import {
 } from './handlerFactory';
 // const catchAsync = require('./../utils/catchAsync');
 
-exports.setProductUserIds = (req, res, next) => {
+export const setProductUserIds = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Allow nested routes
   if (!req.body.product) req.body.product = req.params.productId;
   if (!req.body.user) req.body.user = req.user.id;
