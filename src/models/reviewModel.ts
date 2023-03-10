@@ -1,7 +1,7 @@
 // review / rating / createdAt / ref to product / ref to user
 import { model, Schema } from 'mongoose';
 import type { InferSchemaType } from 'mongoose';
-const Product = require('./productModel');
+import { ProductModel } from './productModel';
 
 const reviewSchema = new Schema(
   {
@@ -57,7 +57,7 @@ reviewSchema.pre(/^find/, function (next) {
   next();
 });
 
-reviewSchema.statics.calcAverageRatings = async function (productId) {
+reviewSchema.statics.calcAverageRatings = async function (productId: string) {
   const stats = await this.aggregate([
     //this => the model. we need to aggregate always on the model
     {
@@ -74,35 +74,37 @@ reviewSchema.statics.calcAverageRatings = async function (productId) {
   console.log(stats);
 
   if (stats.length > 0) {
-    await Product.findByIdAndUpdate(productId, {
+    await ProductModel.findByIdAndUpdate(productId, {
       ratingsQuantity: stats[0].nRating,
       ratingsAverage: stats[0].avgRating,
     });
   } else {
-    await Product.findByIdAndUpdate(productId, {
+    await ProductModel.findByIdAndUpdate(productId, {
       ratingsQuantity: 0,
       ratingsAverage: 4.5,
     });
   }
 };
 
-reviewSchema.post('save', function () {
-  // this points to current review
-  this.constructor.calcAverageRatings(this.product);
-});
+/////////////////////////////////////////////////////
+// reviewSchema.post('save', function () {
+//   // this points to current review
+//   this.constructor.calcAverageRatings(this.product);
+// });
 
-// findByIdAndUpdate
-// findByIdAndDelete
-reviewSchema.pre(/^findOneAnd/, async function (next) {
-  this.r = await this.findOne().clone(); // r = review
-  // console.log(this.r);
-  next();
-});
+// // findByIdAndUpdate
+// // findByIdAndDelete
+// reviewSchema.pre(/^findOneAnd/, async function (next) {
+//   this.r = await this.findOne().clone(); // r = review
+//   // console.log(this.r);
+//   next();
+// });
 
-reviewSchema.post(/^findOneAnd/, async function () {
-  // await this.findOne(); does NOT work here, query has already executed
-  await this.r.constructor.calcAverageRatings(this.r.product);
-});
+// reviewSchema.post(/^findOneAnd/, async function () {
+//   // await this.findOne(); does NOT work here, query has already executed
+//   await this.r.constructor.calcAverageRatings(this.r.product);
+// });
+/////////////////////////////////////////////////////
 
 export type Review = InferSchemaType<typeof reviewSchema>;
 export const ReviewModel = model('Review', reviewSchema);

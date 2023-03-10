@@ -21,9 +21,10 @@ declare module 'xss-clean' {
   function xss(): void;
 }
 
-// interface File {
-//   publicPath?: string;
-// }
+interface Files {
+  imageCover?: Express.Multer.File[];
+  images?: Express.Multer.File[];
+}
 
 declare namespace Express {
   declare namespace Multer {
@@ -35,5 +36,6 @@ declare namespace Express {
     requestTime?: string;
     user?: any;
     file?: Express.Multer.File;
+    files?: Files;
   }
 }

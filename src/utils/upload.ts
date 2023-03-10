@@ -3,7 +3,10 @@ import { NextFunction, Request } from 'express';
 import { cloudinaryOptions } from '../configs/cloudinary';
 import { AppError } from './appError';
 
-exports.uploadImageToCloudinary = async (req: Request, next: NextFunction) => {
+export const uploadImageToCloudinary = async (
+  req: Request,
+  next: NextFunction
+) => {
   const { apiKey, apiSecret, cloudName, uploadFolder, resourceType } =
     cloudinaryOptions;
 

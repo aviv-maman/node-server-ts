@@ -1,6 +1,7 @@
-const multer = require('multer');
-const sharp = require('sharp');
-const product = require('../models/productModel');
+import multer from 'multer';
+import type { FileFilterCallback } from 'multer';
+import sharp from 'sharp';
+import { ProductModel } from '../models/productModel';
 import { catchAsync } from '../utils/catchAsync';
 import {
   createOne,
@@ -9,16 +10,20 @@ import {
   getOne,
   updateOne,
 } from './handlerFactory';
-import { Request } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../utils/appError';
 
 const multerStorage = multer.memoryStorage();
 
-const multerFilter = (req: Request, file, cb) => {
+const multerFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
+    return new AppError('Not an image! Please upload only images.', 400);
   }
 };
 
@@ -27,7 +32,7 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 
-exports.uploadProductImages = upload.fields([
+export const uploadProductImages = upload.fields([
   { name: 'imageCover', maxCount: 1 },
   { name: 'images', maxCount: 3 },
 ]);
@@ -35,8 +40,8 @@ exports.uploadProductImages = upload.fields([
 // upload.single('image') req.file
 // upload.array('images', 5) req.files
 
-exports.resizeProductImages = catchAsync(async (req, res, next) => {
-  if (!req.files.imageCover || !req.files.images) return next();
+export const resizeProductImages = catchAsync(async (req, res, next) => {
+  if (!req?.files?.imageCover || !req.files.images) return next();
 
   // 1) Cover image
   req.body.imageCover = `product-${req.params.id}-${Date.now()}-cover.jpeg`;
@@ -66,21 +71,25 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.aliasTopProducts = (req, res, next) => {
+export const aliasTopProducts = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   req.query.limit = '5';
   req.query.sort = '-ratingsAverage,price';
   req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
   next();
 };
 
-export const getAllProducts = getAll(product);
-export const getProduct = getOne(product, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
-export const createProduct = createOne(product);
-export const updateProduct = updateOne(product);
-export const deleteProduct = deleteOne(product);
+export const getAllProducts = getAll(ProductModel);
+export const getProduct = getOne(ProductModel, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
+export const createProduct = createOne(ProductModel);
+export const updateProduct = updateOne(ProductModel);
+export const deleteProduct = deleteOne(ProductModel);
 
-exports.getProductStats = catchAsync(async (req, res, next) => {
-  const stats = await product.aggregate([
+export const getProductStats = catchAsync(async (req, res, next) => {
+  const stats = await ProductModel.aggregate([
     {
       $match: { ratingsAverage: { $gte: 4.5 } },
     },
@@ -111,10 +120,10 @@ exports.getProductStats = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
-  const year = req.params.year * 1; // 2021
+export const getMonthlyPlan = catchAsync(async (req, res, next) => {
+  const year = Number(req.params.year) * 1; // 2021
 
-  const plan = await product.aggregate([
+  const plan = await ProductModel.aggregate([
     {
       $unwind: '$startDates', // make an array from startDates with all fields of the document and output each element of the array
     }, // for example: 3 startDates in one document => 3 documents with each start date
@@ -159,11 +168,12 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 
 // /products-within/:distance/center/:latlng/unit/:unit
 // /products-within/233/center/34.111745,-118.113491/unit/mi
-exports.getProductsWithin = catchAsync(async (req, res, next) => {
+export const getProductsWithin = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
   const [lat, lng] = latlng.split(',');
 
-  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+  const radius =
+    unit === 'mi' ? Number(distance) / 3963.2 : Number(distance) / 6378.1;
 
   if (!lat || !lng) {
     next(
@@ -174,7 +184,7 @@ exports.getProductsWithin = catchAsync(async (req, res, next) => {
     );
   }
 
-  const products = await product.find({
+  const products = await ProductModel.find({
     startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
   });
 
@@ -187,7 +197,7 @@ exports.getProductsWithin = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getDistances = catchAsync(async (req, res, next) => {
+export const getDistances = catchAsync(async (req, res, next) => {
   const { latlng, unit } = req.params;
   const [lat, lng] = latlng.split(',');
 
@@ -202,12 +212,12 @@ exports.getDistances = catchAsync(async (req, res, next) => {
     );
   }
 
-  const distances = await product.aggregate([
+  const distances = await ProductModel.aggregate([
     {
       $geoNear: {
         near: {
           type: 'Point',
-          coordinates: [lng * 1, lat * 1],
+          coordinates: [Number(lng), Number(lat)],
         },
         distanceField: 'distance',
         distanceMultiplier: multiplier,

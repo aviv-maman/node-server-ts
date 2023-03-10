@@ -1,11 +1,12 @@
-import multer, { FileFilterCallback } from 'multer';
-const sharp = require('sharp');
+import multer from 'multer';
+import type { FileFilterCallback } from 'multer';
+import sharp from 'sharp';
 import { UserModel } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { NextFunction, Request, Response } from 'express';
 import { deleteOne, getAll, getOne, updateOne } from './handlerFactory';
-const { uploadImageToCloudinary } = require('../utils/upload');
+import { uploadImageToCloudinary } from '../utils/upload';
 
 // const multerStorage = multer.diskStorage({
 //   destination: (req, file, cb) => {
@@ -35,9 +36,9 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 
-exports.uploadUserPhoto = upload.single('photo');
+export const uploadUserPhoto = upload.single('photo');
 
-exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+export const resizeUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
   // req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
@@ -68,12 +69,12 @@ const filterObj = (obj: Request['body'], ...allowedFields: string[]) => {
   return newObj;
 };
 
-exports.getMe = (req: Request, res: Response, next: NextFunction) => {
+export const getMe = (req: Request, res: Response, next: NextFunction) => {
   req.params.id = req.user.id;
   next();
 };
 
-exports.updateMe = catchAsync(async (req, res, next) => {
+export const updateMe = catchAsync(async (req, res, next) => {
   // 1) Create error if user POSTs password data
   if (req.body.password || req.body.passwordConfirm) {
     return next(
@@ -119,7 +120,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteMe = catchAsync(async (req, res, next) => {
+export const deleteMe = catchAsync(async (req, res, next) => {
   await UserModel.findByIdAndUpdate(req.user.id, { active: false });
 
   res.status(204).json({
@@ -128,7 +129,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = (req: Request, res: Response) => {
+export const createUser = (req: Request, res: Response) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not yet defined! Please use /signup instead',

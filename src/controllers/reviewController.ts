@@ -1,4 +1,4 @@
-const Review = require('../models/reviewModel');
+import { ReviewModel } from '../models/reviewModel';
 import { NextFunction, Request, Response } from 'express';
 import {
   createOne,
@@ -20,8 +20,8 @@ export const setProductUserIds = (
   next();
 };
 
-export const getAllReviews = getAll(Review);
-export const getReview = getOne(Review);
-export const createReview = createOne(Review);
-export const updateReview = updateOne(Review);
-export const deleteReview = deleteOne(Review);
+export const getAllReviews = getAll(ReviewModel);
+export const getReview = getOne(ReviewModel);
+export const createReview = createOne(ReviewModel);
+export const updateReview = updateOne(ReviewModel);
+export const deleteReview = deleteOne(ReviewModel);

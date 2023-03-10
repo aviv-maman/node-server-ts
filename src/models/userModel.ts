@@ -111,6 +111,71 @@ const userSchema = new Schema(
   },
   {
     timestamps: true, // add updatedAt
+    /*
+Do not declare methods using ES6 arrow functions (=>).
+Arrow functions explicitly prevent binding this, so your method will not have access to the document
+*/
+    methods: {
+      async correctPassword(candidatePassword: string, userPassword: string) {
+        return await bcrypt.compare(candidatePassword, userPassword);
+      },
+      changedPasswordAfter(JWTTimestamp?: number) {
+        if (this.passwordChangedAt) {
+          const a = this.passwordChangedAt.getTime() / 1000;
+          const changedTimestamp = parseInt(
+            (this.passwordChangedAt.getTime() / 1000).toString(), //convert to seconds
+            10 //specify the radix (the base in mathematical numeral systems)
+          );
+
+          return Number(JWTTimestamp) < changedTimestamp;
+        }
+
+        // False means NOT changed
+        return false;
+      },
+      createPasswordResetToken() {
+        const resetToken = crypto.randomBytes(32).toString('hex');
+
+        this.passwordResetToken = crypto
+          .createHash('sha256')
+          .update(resetToken)
+          .digest('hex');
+
+        console.log({ resetToken }, this.passwordResetToken);
+
+        this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        return resetToken;
+      },
+      createEmailVerificationToken() {
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
+        this.emailVerificationToken = crypto
+          .createHash('sha256')
+          .update(verificationToken)
+          .digest('hex');
+
+        console.log({ verificationToken }, this.emailVerificationToken);
+
+        this.emailVerificationExpires = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
+
+        return verificationToken;
+      },
+      createNewEmailToken() {
+        const NewEmailToken = crypto.randomBytes(32).toString('hex');
+
+        this.newEmailToken = crypto
+          .createHash('sha256')
+          .update(NewEmailToken)
+          .digest('hex');
+
+        console.log({ NewEmailToken }, this.newEmailToken);
+
+        this.newEmailExpires = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
+
+        return NewEmailToken;
+      },
+    },
   }
 );
 
@@ -138,72 +203,6 @@ userSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } });
   next();
 });
-
-userSchema.methods.correctPassword = async function (
-  candidatePassword: string,
-  userPassword: string
-) {
-  return await bcrypt.compare(candidatePassword, userPassword);
-};
-
-userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
-  if (this.passwordChangedAt) {
-    const changedTimestamp = parseInt(
-      this.passwordChangedAt.getTime() / 1000,
-      10
-    );
-
-    return JWTTimestamp < changedTimestamp;
-  }
-
-  // False means NOT changed
-  return false;
-};
-
-userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  console.log({ resetToken }, this.passwordResetToken);
-
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-  return resetToken;
-};
-
-userSchema.methods.createEmailVerificationToken = function () {
-  const verificationToken = crypto.randomBytes(32).toString('hex');
-
-  this.emailVerificationToken = crypto
-    .createHash('sha256')
-    .update(verificationToken)
-    .digest('hex');
-
-  console.log({ verificationToken }, this.emailVerificationToken);
-
-  this.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 60 minutes
-
-  return verificationToken;
-};
-
-userSchema.methods.createNewEmailToken = function () {
-  const NewEmailToken = crypto.randomBytes(32).toString('hex');
-
-  this.newEmailToken = crypto
-    .createHash('sha256')
-    .update(NewEmailToken)
-    .digest('hex');
-
-  console.log({ NewEmailToken }, this.newEmailToken);
-
-  this.newEmailExpires = Date.now() + 60 * 60 * 1000; // 60 minutes
-
-  return NewEmailToken;
-};
 
 export type User = InferSchemaType<typeof userSchema>;
 export const UserModel = model('User', userSchema);

@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { promisify } from 'util';
+// import { promisify } from 'util';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
-const { OAuth2Client } = require('google-auth-library');
-const User = require('../models/userModel');
+import { OAuth2Client } from 'google-auth-library';
+import { User, UserModel } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { sendEmail } from '../utils/email';
@@ -51,7 +51,7 @@ const verifyToken = async (
 };
 
 export const signup = catchAsync(async (req, res, next) => {
-  const newUser = await User.create({
+  const newUser = await UserModel.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     email: req.body.email,
@@ -70,7 +70,7 @@ export const login = catchAsync(async (req, res, next) => {
     return next(new AppError('Please provide email and password!', 400));
   }
   // 2) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
+  const user = await UserModel.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
@@ -111,7 +111,7 @@ export const protect = catchAsync(async (req, res, next) => {
   const decoded = await verifyToken(token, process.env.JWT_SECRET ?? '');
 
   // 3) Check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await UserModel.findById(decoded.id);
   if (!currentUser) {
     return next(
       new AppError(
@@ -149,7 +149,7 @@ export const isLoggedIn = async (
       );
 
       // 2) Check if user still exists
-      const currentUser = await User.findById(decoded.id);
+      const currentUser = await UserModel.findById(decoded.id);
       if (!currentUser) {
         return next();
       }
@@ -189,7 +189,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
   //When updating password or user, we always use save method, not update method
   // 1) Get user based on POSTed email
-  const user = await User.findOne({ email: req.body.email });
+  const user = await UserModel.findOne({ email: req.body.email });
   if (!user) {
     return next(
       new AppError(
@@ -242,7 +242,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     .update(req.params.token)
     .digest('hex');
 
-  const user = await User.findOne({
+  const user = await UserModel.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
@@ -264,21 +264,25 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
 export const updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
-  const user = await User.findById(req.user.id).select('+password');
+  const user = await UserModel.findById(req.user.id).select('+password');
 
   // 2) Check if POSTed current password is correct
-  if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
-    return next(new AppError('Your current password is wrong.', 401));
+  if (user) {
+    if (
+      !(await user.correctPassword(req.body.currentPassword, user.password))
+    ) {
+      return next(new AppError('Your current password is wrong.', 401));
+    }
+
+    // 3) If so, update password
+    user.password = req.body.newPassword;
+    user.passwordConfirm = req.body.newPasswordConfirm; // passwordConfirm will be validated by the validator in the user model (userSchema) and deleted from the document
+    await user.save();
+    // User.findByIdAndUpdate will NOT work as intended! Don't use anything related to update on passwords!
+
+    // 4) Log user in, send JWT
+    createSendToken(user, 200, res);
   }
-
-  // 3) If so, update password
-  user.password = req.body.newPassword;
-  user.passwordConfirm = req.body.newPasswordConfirm; // passwordConfirm will be validated by the validator in the user model (userSchema) and deleted from the document
-  await user.save();
-  // User.findByIdAndUpdate will NOT work as intended! Don't use anything related to update on passwords!
-
-  // 4) Log user in, send JWT
-  createSendToken(user, 200, res);
 });
 
 export const verifyEmail = catchAsync(async (req, res, next) => {
@@ -297,7 +301,7 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
     // const user = await User.findByIdAndUpdate(id, { isEmailVerified: true });
     // const user = await User.findById(id);
 
-    const user = await User.findOne({
+    const user = await UserModel.findOne({
       emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: Date.now() },
     });
@@ -326,7 +330,7 @@ export const sendVerificationEmail = catchAsync(async (req, res, next) => {
 
   //When updating password or user, we always use save method, not update method
   // 1) Get user based on POSTed email
-  const user = await User.findOne({ email: req.body.email });
+  const user = await UserModel.findOne({ email: req.body.email });
   if (!user) {
     return next(
       new AppError(
@@ -401,7 +405,9 @@ export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
 
   //When updating password or user, we always use save method, not update method
   // 1) Get user based on POSTed email
-  const isEmailAlreadyUsed = await User.findOne({ email: req.body.newEmail });
+  const isEmailAlreadyUsed = await UserModel.findOne({
+    email: req.body.newEmail,
+  });
   if (isEmailAlreadyUsed) {
     return next(
       new AppError(`Email address is already used (${req.body.newEmail})`, 404)
@@ -409,7 +415,7 @@ export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
   }
 
   // 1) Get user based on POSTed email and check if it is verified and if password is correct
-  const user = await User.findOne({ email: req.body.currentEmail }).select(
+  const user = await UserModel.findOne({ email: req.body.currentEmail }).select(
     '+password'
   );
 
@@ -473,7 +479,7 @@ export const changeEmail = catchAsync(async (req, res, next) => {
     .digest('hex');
 
   try {
-    const user = await User.findOne({
+    const user = await UserModel.findOne({
       newEmailToken: hashedToken,
       newEmailExpires: { $gt: Date.now() },
     }).select('+candidateEmail');
@@ -482,7 +488,7 @@ export const changeEmail = catchAsync(async (req, res, next) => {
     if (!user) {
       return next(new AppError('User was not found or token is invalid', 400));
     }
-    user.email = user.candidateEmail;
+    if (user.candidateEmail) user.email = user.candidateEmail;
     user.candidateEmail = undefined;
     user.newEmailToken = undefined;
     user.newEmailExpires = undefined;
@@ -505,23 +511,23 @@ export const googleLogin = catchAsync(async (req, res, next) => {
       //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
     });
     const payload = ticket.getPayload();
-    const userId = payload.sub;
+    const userId = payload?.sub;
     // If request specified a G Suite domain:
     // const domain = payload['hd'];
     try {
-      let user = await User.findOne({ googleId: userId });
+      let user = await UserModel.findOne({ googleId: userId });
       if (user) {
         createSendToken(user, 200, res);
       } else {
-        const isEmailAlreadyRegistered = await User.findOne({
-          email: payload.email,
+        const isEmailAlreadyRegistered = await UserModel.findOne({
+          email: payload?.email,
         });
         if (isEmailAlreadyRegistered) {
           isEmailAlreadyRegistered.googleId = userId;
           isEmailAlreadyRegistered.save({ validateBeforeSave: false });
           user = isEmailAlreadyRegistered;
         } else {
-          user = new User(payload).save({ validateBeforeSave: false });
+          user = new UserModel(payload).save({ validateBeforeSave: false });
         }
 
         createSendToken(user, 200, res);

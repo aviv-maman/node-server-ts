@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
 import type { InferSchemaType } from 'mongoose';
-const slugify = require('slugify');
+import slugify from 'slugify';
 // const User = require('./userModel');
 // const validator = require('validator');
 
@@ -45,16 +45,17 @@ const productSchema = new Schema(
       type: Object,
       required: true,
       validate: [
-        (value: number) => value.length > 0,
+        (value: { usd: number; eur: number; nis: number }) =>
+          value.usd > 0 && value.eur > 0 && value.nis > 0,
         'A product must have a price',
       ],
     },
     priceDiscount: {
-      type: Number,
+      type: Object,
       validate: {
-        validator: function (val: number) {
+        validator: function (val: { usd: number; eur: number; nis: number }) {
           // this only points to current doc on NEW document creation
-          return val < this.price;
+          return 0 < val.usd && val.eur && val.nis <= 100;
         },
         message: 'Discount price ({VALUE}) should be below regular price',
       },
@@ -113,10 +114,6 @@ productSchema.index({ price: 1, ratingsAverage: -1 });
 productSchema.index({ slug: 1 });
 productSchema.index({ startLocation: '2dsphere' });
 
-productSchema.virtual('durationWeeks').get(function () {
-  return this.duration / 7;
-});
-
 // Virtual populate
 productSchema.virtual('reviews', {
   ref: 'Review',
@@ -149,21 +146,23 @@ productSchema.pre('save', function (next) {
 // QUERY MIDDLEWARE
 // regex to match all methods that start with find => findById is findOne behind the scenes
 // productSchema.pre('find', function (next) {
-productSchema.pre(/^find/, function (next) {
-  this.find({ secretProduct: { $ne: true } }); // this = query object. we can chain all the methods of query
+/////////////////////////////////////////////////////
+// productSchema.pre(/^find/, function (next) {
+//   this.find({ secretProduct: { $ne: true } }); // this = query object. we can chain all the methods of query
 
-  this.start = Date.now();
-  next();
-});
+//   this.start = Date.now();
+//   next();
+// });
 
-productSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'guides',
-    // select: '-__v -passwordChangedAt'
-  });
+// productSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'guides',
+//     // select: '-__v -passwordChangedAt'
+//   });
 
-  next();
-});
+//   next();
+// });
+/////////////////////////////////////////////////////
 
 // productSchema.post(/^find/, function (docs, next) {
 //   console.log(`Query took ${Date.now() - this.start} milliseconds!`);
