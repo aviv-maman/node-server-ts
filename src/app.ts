@@ -1,22 +1,22 @@
-const path = require('path');
+import path from 'path';
 import express, { Application } from 'express';
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-const sanitizer = require('perfect-express-sanitizer');
-const hpp = require('hpp');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import sanitizer from 'perfect-express-sanitizer';
+import hpp from 'hpp';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 
 import { AppError } from './utils/appError';
 import { globalErrorHandler } from './controllers/errorController';
-const productRouter = require('./routes/productRoutes');
-const userRouter = require('./routes/userRoutes');
+import { productRouter } from './routes/productRoutes';
+import { userRouter } from './routes/userRoutes';
 import { reviewRouter } from './routes/reviewRoutes';
-const bookingRouter = require('./routes/bookingRoutes');
+import { bookingRouter } from './routes/bookingRoutes';
 
-const app: Application = express();
+export const app: Application = express();
 
 // 1) GLOBAL MIDDLEWARES
 // Implement CORS
@@ -104,5 +104,3 @@ app.all('*', (req, res, next) => {
 });
 
 app.use(globalErrorHandler);
-
-module.exports = app;

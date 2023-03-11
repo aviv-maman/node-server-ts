@@ -3,21 +3,21 @@ const productController = require('../controllers/productController');
 const authController = require('../controllers/authController');
 import { reviewRouter } from './reviewRoutes';
 
-const router = Router();
+export const productRouter = Router();
 
 // router.param('id', productController.checkID);
 
 // POST /product/234fad4/reviews
 // GET /product/234fad4/reviews
 
-router.use('/:productId/reviews', reviewRouter);
+productRouter.use('/:productId/reviews', reviewRouter);
 
-router
+productRouter
   .route('/top-5-cheap')
   .get(productController.aliasTopProducts, productController.getAllProducts);
 
-router.route('/product-stats').get(productController.getProductStats);
-router
+productRouter.route('/product-stats').get(productController.getProductStats);
+productRouter
   .route('/monthly-plan/:year')
   .get(
     authController.protect,
@@ -25,17 +25,17 @@ router
     productController.getMonthlyPlan
   );
 
-router
+productRouter
   .route('/products-within/:distance/center/:latlng/unit/:unit')
   .get(productController.getProductsWithin);
 // /products-within?distance=233&center=-40,45&unit=mi
 // /products-within/233/center/-40,45/unit/mi
 
-router
+productRouter
   .route('/distances/:latlng/unit/:unit')
   .get(productController.getDistances);
 
-router
+productRouter
   .route('/')
   .get(productController.getAllProducts)
   .post(
@@ -44,7 +44,7 @@ router
     productController.createProduct
   );
 
-router
+productRouter
   .route('/:id')
   .get(productController.getProduct)
   .patch(
@@ -59,5 +59,3 @@ router
     authController.restrictTo('admin', 'lead-guide'),
     productController.deleteProduct
   );
-
-module.exports = router;

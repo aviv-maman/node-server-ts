@@ -2,14 +2,14 @@ import dotenv from 'dotenv';
 dotenv.config({ path: './config.env' });
 
 process.on('uncaughtException', (err: Error) => {
-  console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-  console.log(err.name, err.message, err.stack);
+  console.log('Uncaught Exception! 💥 Shutting down... 💩');
+  console.error(err.name, err.message, err.stack);
   process.exit(1);
 });
 
-const app = require('./app');
+import { app } from './app';
 
-const connectDB = require('./configs/db');
+import { connectDB } from './configs/db';
 //mongodb://127.0.0.1:27017/test-db
 connectDB();
 
@@ -20,16 +20,18 @@ const server = app.listen(port, () => {
 });
 
 process.on('unhandledRejection', (err: Error) => {
-  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
-  console.log(err.name, err.message, err.stack);
-  server.close(() => {
+  console.log('Unhandled Rejection! 💥 Shutting down... 🤡');
+  console.error(err.name, err.message, err.stack);
+  server.close((err) => {
     process.exit(1);
   });
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', (listener) => {
   console.log('👋 SIGTERM RECEIVED. Shutting down gracefully');
-  server.close(() => {
+  server.close((err) => {
+    console.error(err?.name, err?.message, err?.stack);
     console.log('💥 Process terminated!');
+    process.exit(0);
   });
 });

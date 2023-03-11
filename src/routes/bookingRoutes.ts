@@ -2,26 +2,24 @@ import { Router } from 'express';
 const bookingController = require('../controllers/bookingController');
 const authController = require('../controllers/authController');
 
-const router = Router();
+export const bookingRouter = Router();
 
-router.use(authController.protect);
+bookingRouter.use(authController.protect);
 
-router.get(
+bookingRouter.get(
   '/checkout-session/:productId',
   bookingController.getCheckoutSession
 );
 
-router.use(authController.restrictTo('admin', 'lead-guide'));
+bookingRouter.use(authController.restrictTo('admin', 'lead-guide'));
 
-router
+bookingRouter
   .route('/')
   .get(bookingController.getAllBookings)
   .post(bookingController.createBooking);
 
-router
+bookingRouter
   .route('/:id')
   .get(bookingController.getBooking)
   .patch(bookingController.updateBooking)
   .delete(bookingController.deleteBooking);
-
-module.exports = router;
