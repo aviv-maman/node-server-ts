@@ -27,7 +27,7 @@ interface Files {
 }
 
 declare namespace Express {
-  declare namespace Multer {
+  namespace Multer {
     interface File {
       publicPath?: string;
     }
