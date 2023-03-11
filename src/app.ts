@@ -4,7 +4,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const sanitizer = require('perfect-express-sanitizer');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -25,9 +25,9 @@ app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 ////
 // app.use(cors());
 // Access-Control-Allow-Origin *
-// api.natours.com, front-end natours.com
+// api.my-site.com, front-end my-site.com
 // app.use(cors({
-//   origin: 'https://www.natours.com'
+//   origin: 'https://www.my-site.com'
 // }))
 
 // app.options('*', cors());
@@ -62,7 +62,15 @@ app.use(cookieParser());
 app.use(mongoSanitize());
 
 // Data sanitization against XSS
-app.use(xss());
+app.use(
+  sanitizer.clean({
+    xss: true,
+    noSql: true,
+    sql: true,
+    sqlLevel: 5,
+    noSqlLevel: 5,
+  })
+);
 
 // Prevent parameter pollution
 app.use(

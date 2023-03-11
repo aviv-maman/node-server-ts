@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/server.ts",
-    "dev": "nodemon src/server.ts",
-    "prod": "SET NODE_ENV=production&&nodemon src/server.ts",
+    "start": "node ./dist/server.js",
+    "dev": "nodemon ./src/server.ts",
+    "prod": "SET NODE_ENV=production&&nodemon ./src/server.ts",
     "tsc": "tsc",
     "build": "tsc -p ."
   },
