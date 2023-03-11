@@ -41,7 +41,7 @@ const createSendToken = (
   res.status(statusCode).json({
     success: true,
     token,
-    userWithoutPassword,
+    user: userWithoutPassword,
   });
 };
 
