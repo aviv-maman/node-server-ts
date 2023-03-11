@@ -4,18 +4,25 @@ import type { NextFunction, Request, Response } from 'express';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
-import { User, UserModel } from '../models/userModel';
+import { UserModel } from '../models/userModel';
+import type { User } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { sendEmail } from '../utils/email';
+import type { HydratedDocument } from 'mongoose';
+import { omit } from 'lodash';
 
 const signToken = (id: string) =>
   jwtSign({ id }, process.env.JWT_SECRET ?? '', {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-const createSendToken = (user, statusCode: number, res: Response) => {
-  const token = signToken(user._id);
+const createSendToken = (
+  user: HydratedDocument<User>,
+  statusCode: number,
+  res: Response
+) => {
+  const token = signToken(user._id as unknown as string);
   const cookieOptions = {
     expires: new Date(
       Date.now() +
@@ -29,12 +36,12 @@ const createSendToken = (user, statusCode: number, res: Response) => {
   res.cookie('jwt', token, cookieOptions);
 
   // Remove password from output
-  user.password = undefined;
+  const userWithoutPassword = omit(user, user.password);
 
   res.status(statusCode).json({
     success: true,
     token,
-    user,
+    userWithoutPassword,
   });
 };
 
@@ -170,7 +177,7 @@ export const isLoggedIn = async (
 };
 
 export const restrictTo =
-  (...roles) =>
+  (...roles: User['role'][]) =>
   (req: Request, res: Response, next: NextFunction) => {
     // roles ['admin', 'lead-guide']. role='user'
     if (!roles.includes(req.user.role)) {

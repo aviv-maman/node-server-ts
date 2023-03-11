@@ -1,7 +1,8 @@
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import { Model } from 'mongoose';
-const APIFeatures = require('../utils/apiFeatures');
+import type { FilterQuery } from 'mongoose';
+import { APIFeatures } from '../utils/apiFeatures';
 
 export const deleteOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
@@ -77,7 +78,7 @@ export const getOne = (
 export const getAll = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     // To allow for nested GET reviews on product (hack)
-    let filter = {};
+    let filter = {} as FilterQuery<any>;
     if (req.params.productId) filter = { product: req.params.productId };
 
     const paginatedQuery = new APIFeatures(Model.find(filter), req.query)

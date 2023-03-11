@@ -36,6 +36,34 @@ const reviewSchema = new Schema(
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    statics: {
+      async calcAverageRatings(this, productId: string) {
+        const stats = await this.aggregate([
+          //this => the model. we need to aggregate always on the model
+          {
+            $match: { product: productId },
+          },
+          {
+            $group: {
+              _id: '$product',
+              nRating: { $sum: 1 },
+              avgRating: { $avg: '$rating' },
+            },
+          },
+        ]);
+        if (stats.length > 0) {
+          await ProductModel.findByIdAndUpdate(productId, {
+            ratingsQuantity: stats[0].nRating,
+            ratingsAverage: stats[0].avgRating,
+          });
+        } else {
+          await ProductModel.findByIdAndUpdate(productId, {
+            ratingsQuantity: 0,
+            ratingsAverage: 4.5,
+          });
+        }
+      },
+    },
   }
 );
 
@@ -57,53 +85,33 @@ reviewSchema.pre(/^find/, function (next) {
   next();
 });
 
-reviewSchema.statics.calcAverageRatings = async function (productId: string) {
-  const stats = await this.aggregate([
-    //this => the model. we need to aggregate always on the model
-    {
-      $match: { product: productId },
-    },
-    {
-      $group: {
-        _id: '$product',
-        nRating: { $sum: 1 },
-        avgRating: { $avg: '$rating' },
-      },
-    },
-  ]);
-  console.log(stats);
-
-  if (stats.length > 0) {
-    await ProductModel.findByIdAndUpdate(productId, {
-      ratingsQuantity: stats[0].nRating,
-      ratingsAverage: stats[0].avgRating,
-    });
-  } else {
-    await ProductModel.findByIdAndUpdate(productId, {
-      ratingsQuantity: 0,
-      ratingsAverage: 4.5,
-    });
-  }
-};
+interface IReview extends Review {
+  calcAverageRatings(productId: string): Promise<any>;
+  r: any;
+}
 
 /////////////////////////////////////////////////////
-// reviewSchema.post('save', function () {
-//   // this points to current review
-//   this.constructor.calcAverageRatings(this.product);
-// });
+reviewSchema.post('save', function (doc: IReview) {
+  // this points to current review
+  doc.calcAverageRatings(this.product.toString());
+});
 
-// // findByIdAndUpdate
-// // findByIdAndDelete
-// reviewSchema.pre(/^findOneAnd/, async function (next) {
-//   this.r = await this.findOne().clone(); // r = review
-//   // console.log(this.r);
-//   next();
-// });
+// findByIdAndUpdate
+// findByIdAndDelete
+reviewSchema.pre(
+  /^findOneAnd/,
+  { document: true, query: false },
+  async function (this, next) {
+    const review = await this.findOne().clone(); // r = review
+    this.set({ r: review });
+    next();
+  }
+);
 
-// reviewSchema.post(/^findOneAnd/, async function () {
-//   // await this.findOne(); does NOT work here, query has already executed
-//   await this.r.constructor.calcAverageRatings(this.r.product);
-// });
+reviewSchema.post(/^findOneAnd/, async function (this: IReview) {
+  // await this.findOne(); does NOT work here, query has already executed
+  await this.r.constructor.calcAverageRatings(this.r.product.toString());
+});
 /////////////////////////////////////////////////////
 
 export type Review = InferSchemaType<typeof reviewSchema>;

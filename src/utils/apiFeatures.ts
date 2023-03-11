@@ -1,5 +1,25 @@
+import type { Query } from 'mongoose';
+
+type QueryString = {
+  type?: string;
+  name?: string;
+  release_date?: string;
+  from_date?: string;
+  to_date?: string;
+  until_date?: string;
+  exact_price?: { currency: string; price: string };
+  price_range?: { currency: string; minPrice: string; maxPrice: string };
+  sort?: string;
+  fields?: string;
+  page?: string;
+  limit?: string;
+  count?: number;
+};
+
 export class APIFeatures {
-  constructor(query, queryString) {
+  query: Query<any, any, any, any>;
+  queryString: QueryString;
+  constructor(query: Query<any, any, any, any>, queryString: QueryString) {
     this.query = query;
     this.queryString = queryString;
   }
@@ -17,7 +37,10 @@ export class APIFeatures {
       'from_date',
       'to_date',
     ];
-    excludedFields.forEach((el) => delete queryObj[el]);
+    excludedFields.forEach(
+      (element) =>
+        delete (queryObj as unknown as keyof QueryString as any)[element]
+    );
 
     // 1B) Advanced filtering
     // { difficulty: 'easy', duration: { $gte: 5 } }
@@ -59,9 +82,9 @@ export class APIFeatures {
   exactDateFilter() {
     if (this.queryString.release_date) {
       const [year, month, day] = this.queryString.release_date.split('-');
-      const exactDate = new Date(year, month - 1, day);
+      const exactDate = new Date(Number(year), Number(month) - 1, Number(day));
       this.query = this.query.find({
-        release_date: exactDate !== 'Invalid Date' ? exactDate : null,
+        release_date: exactDate instanceof Date ? exactDate : null,
       });
     } else {
       this.queryString.release_date = undefined;
@@ -73,9 +96,9 @@ export class APIFeatures {
   fromDateFilter() {
     if (this.queryString.from_date) {
       const [year, month, day] = this.queryString.from_date.split('-');
-      const fromDate = new Date(year, month - 1, day);
+      const fromDate = new Date(Number(year), Number(month) - 1, Number(day));
       this.query = this.query.find({
-        release_date: { $gte: fromDate !== 'Invalid Date' ? fromDate : null },
+        release_date: { $gte: fromDate instanceof Date ? fromDate : null },
       });
     } else {
       this.queryString.from_date = undefined;
@@ -87,9 +110,9 @@ export class APIFeatures {
   untilDateFilter() {
     if (this.queryString.until_date) {
       const [year, month, day] = this.queryString.until_date.split('-');
-      const untilDate = new Date(year, month - 1, day);
+      const untilDate = new Date(Number(year), Number(month) - 1, Number(day));
       this.query = this.query.find({
-        release_date: { $lte: untilDate !== 'Invalid Date' ? untilDate : null },
+        release_date: { $lte: untilDate instanceof Date ? untilDate : null },
       });
     } else {
       this.queryString.until_date = undefined;
@@ -183,8 +206,8 @@ export class APIFeatures {
   }
 
   paginate() {
-    const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 10;
+    const page = Number(this.queryString.page) || 1;
+    const limit = Number(this.queryString.limit) || 10;
     const skip = (page - 1) * limit;
 
     this.query = this.query.skip(skip).limit(limit);
@@ -193,7 +216,7 @@ export class APIFeatures {
   }
 
   count() {
-    this.queryString.count = this.query.count() * 1 || 0;
+    this.queryString.count = Number(this.query.count()) || 0;
     return this;
   }
 }

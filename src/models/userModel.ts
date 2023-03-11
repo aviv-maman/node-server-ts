@@ -4,6 +4,10 @@ import type { InferSchemaType } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 
+interface IUser extends InferSchemaType<typeof userSchema> {
+  password: string;
+}
+
 const userSchema = new Schema(
   {
     firstName: {
@@ -49,7 +53,7 @@ const userSchema = new Schema(
       required: [true, 'Please confirm your password'],
       validate: {
         // This only works on CREATE and SAVE!!! So on updating a user, we need to use Save as well and not findOneAndUpdate
-        validator: function (element: string) {
+        validator: function (this: IUser, element: string) {
           return element === this.password;
         },
         message: 'Passwords are not the same!',
@@ -174,6 +178,17 @@ Arrow functions explicitly prevent binding this, so your method will not have ac
         this.newEmailExpires = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
 
         return NewEmailToken;
+      },
+    },
+    virtuals: {
+      fullName: {
+        get(value: string, virtual, doc) {
+          return this.firstName + ' ' + this.lastName;
+        },
+        set(value: string, virtual, doc) {
+          this.firstName = value.substr(0, value.indexOf(' '));
+          this.lastName = value.substr(value.indexOf(' ') + 1);
+        },
       },
     },
   }
