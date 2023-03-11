@@ -534,9 +534,16 @@ export const googleLogin = catchAsync(async (req, res, next) => {
           isEmailAlreadyRegistered.save({ validateBeforeSave: false });
           user = isEmailAlreadyRegistered;
         } else {
-          user = new UserModel(payload).save({ validateBeforeSave: false });
+          const newUser = await new UserModel({
+            email: payload?.email,
+            googleId: userId,
+            firstName: payload?.given_name,
+            lastName: payload?.family_name,
+            photo: payload?.picture,
+            locale: payload?.locale,
+          }).save({ validateBeforeSave: false });
+          user = newUser;
         }
-
         createSendToken(user, 200, res);
       }
     } catch (error) {

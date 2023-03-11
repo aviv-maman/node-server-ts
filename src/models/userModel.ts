@@ -112,6 +112,9 @@ const userSchema = new Schema(
     googleId: {
       type: String,
     },
+    locale: {
+      type: String,
+    },
   },
   {
     timestamps: true, // add updatedAt
