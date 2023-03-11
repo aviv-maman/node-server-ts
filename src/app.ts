@@ -13,7 +13,7 @@ import { AppError } from './utils/appError';
 import { globalErrorHandler } from './controllers/errorController';
 const productRouter = require('./routes/productRoutes');
 const userRouter = require('./routes/userRoutes');
-const reviewRouter = require('./routes/reviewRoutes');
+import { reviewRouter } from './routes/reviewRoutes';
 const bookingRouter = require('./routes/bookingRoutes');
 
 const app: Application = express();
