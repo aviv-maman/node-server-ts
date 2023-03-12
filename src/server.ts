@@ -7,9 +7,9 @@ process.on('uncaughtException', (err: Error) => {
   process.exit(1);
 });
 
-import { app } from './app';
+import app from './app';
 
-import { connectDB } from './configs/db';
+import connectDB from './configs/db';
 //mongodb://127.0.0.1:27017/test-db
 connectDB();
 

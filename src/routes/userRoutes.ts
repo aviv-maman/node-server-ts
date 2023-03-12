@@ -2,7 +2,7 @@ import { Router } from 'express';
 import userController from '../controllers/userController';
 import authController from '../controllers/authController';
 
-export const userRouter = Router();
+const userRouter = Router();
 
 userRouter.post('/signup', authController.signup);
 userRouter.post('/login', authController.login);
@@ -48,3 +48,5 @@ userRouter
   .get(userController.getUser)
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
+
+export default userRouter;

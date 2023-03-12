@@ -2,7 +2,7 @@ import { Router } from 'express';
 import reviewController from '../controllers/reviewController';
 import { protect, restrictTo } from '../controllers/authController';
 
-export const reviewRouter = Router({ mergeParams: true });
+const reviewRouter = Router({ mergeParams: true });
 
 reviewRouter.use(protect);
 
@@ -20,3 +20,5 @@ reviewRouter
   .get(reviewController.getReview)
   .patch(restrictTo('user', 'admin'), reviewController.updateReview)
   .delete(restrictTo('user', 'admin'), reviewController.deleteReview);
+
+export default reviewRouter;

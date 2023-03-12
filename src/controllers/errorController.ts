@@ -94,7 +94,7 @@ const sendErrorProd = (err: AppError, req: Request, res: Response) => {
   });
 };
 
-export const globalErrorHandler = (
+const globalErrorHandler = (
   err: AppError | MongooseError.CastError | MongoServerError,
   req: Request,
   res: Response,
@@ -128,3 +128,5 @@ export const globalErrorHandler = (
     sendErrorProd(error as AppError, req, res);
   }
 };
+
+export default globalErrorHandler;

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bookingController from '../controllers/bookingController';
 import { protect, restrictTo } from '../controllers/authController';
 
-export const bookingRouter = Router();
+const bookingRouter = Router();
 
 bookingRouter.use(protect);
 
@@ -23,3 +23,5 @@ bookingRouter
   .get(bookingController.getBooking)
   .patch(bookingController.updateBooking)
   .delete(bookingController.deleteBooking);
+
+export default bookingRouter;

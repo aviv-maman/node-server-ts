@@ -1,5 +1,8 @@
+//Description: This file is the entry point of the application
+//3rd party imports
 import path from 'path';
-import express, { Application } from 'express';
+import express from 'express';
+import type { Application } from 'express';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -8,15 +11,16 @@ import sanitizer from 'perfect-express-sanitizer';
 import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-
+//Error handling
 import AppError from './utils/appError';
-import { globalErrorHandler } from './controllers/errorController';
-import { productRouter } from './routes/productRoutes';
-import { userRouter } from './routes/userRoutes';
-import { reviewRouter } from './routes/reviewRoutes';
-import { bookingRouter } from './routes/bookingRoutes';
+import globalErrorHandler from './controllers/errorController';
+//Routes
+import productRouter from './routes/productRoutes';
+import userRouter from './routes/userRoutes';
+import reviewRouter from './routes/reviewRoutes';
+import bookingRouter from './routes/bookingRoutes';
 
-export const app: Application = express();
+const app: Application = express();
 
 // 1) GLOBAL MIDDLEWARES
 // Implement CORS
@@ -104,3 +108,5 @@ app.all('*', (req, res, next) => {
 });
 
 app.use(globalErrorHandler);
+
+export default app;

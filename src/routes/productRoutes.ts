@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import productController from '../controllers/productController';
 import { protect, restrictTo } from '../controllers/authController';
-import { reviewRouter } from './reviewRoutes';
+import reviewRouter from './reviewRoutes';
 
-export const productRouter = Router();
+const productRouter = Router();
 
 // router.param('id', productController.checkID);
 
@@ -59,3 +59,5 @@ productRouter
     restrictTo('admin', 'lead-guide'),
     productController.deleteProduct
   );
+
+export default productRouter;
