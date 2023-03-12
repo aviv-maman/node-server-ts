@@ -1,6 +1,6 @@
 import type { UploadApiOptions } from 'cloudinary';
-
-require('dotenv').config({ path: '../config.env' });
+import dotenv from 'dotenv';
+dotenv.config({ path: '../config.env' });
 
 const cloudinaryOptions = {
   cloudName: process.env.CLOUDINARY_CLOUD_NAME,

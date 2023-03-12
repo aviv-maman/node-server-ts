@@ -1,8 +1,8 @@
 import { model, Schema } from 'mongoose';
 import type { InferSchemaType } from 'mongoose';
 import slugify from 'slugify';
-// const User = require('./userModel');
-// const validator = require('validator');
+// import { UserModel } from './userModel';
+// import validator from 'validator';
 
 const productSchema = new Schema(
   {
@@ -128,7 +128,7 @@ productSchema.pre('save', function (next) {
 });
 
 // productSchema.pre('save', async function (next) { // Embedding guides
-//   const guidesPromises = this.guides.map(async id => await User.findById(id));
+//   const guidesPromises = this.guides.map(async id => await UserModel.findById(id));
 //   this.guides = await Promise.all(guidesPromises);
 // next();
 // });
