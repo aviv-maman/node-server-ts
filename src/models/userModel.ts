@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { model, Schema } from 'mongoose';
 import type { InferSchemaType } from 'mongoose';
 import validator from 'validator';
-import bcrypt from 'bcryptjs';
+import { compare as bcryptCompare, hash as bcryptHash } from 'bcryptjs';
 
 interface IUser extends InferSchemaType<typeof userSchema> {
   password: string;
@@ -28,10 +28,12 @@ const userSchema = new Schema(
     dateOfBirth: {
       type: Date,
       // required: [true, 'Please enter your date of birth!'],
+      // validate: [validator.isDate, 'Please provide a valid date'],
     },
     phoneNumber: {
       type: String,
       // required: [true, 'Please enter your phone number!'],
+      validate: [validator.isMobilePhone, 'Please provide a valid number'],
     },
     photo: {
       type: String,
@@ -124,11 +126,10 @@ Arrow functions explicitly prevent binding this, so your method will not have ac
 */
     methods: {
       async correctPassword(candidatePassword: string, userPassword: string) {
-        return await bcrypt.compare(candidatePassword, userPassword);
+        return await bcryptCompare(candidatePassword, userPassword);
       },
       changedPasswordAfter(JWTTimestamp?: number) {
         if (this.passwordChangedAt) {
-          const a = this.passwordChangedAt.getTime() / 1000;
           const changedTimestamp = parseInt(
             (this.passwordChangedAt.getTime() / 1000).toString(), //convert to seconds
             10 //specify the radix (the base in mathematical numeral systems)
@@ -202,7 +203,7 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   // Hash the password with cost of 12
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcryptHash(this.password, 12);
 
   // Delete passwordConfirm field
   this.set('passwordConfirm', undefined);

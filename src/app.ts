@@ -4,7 +4,7 @@ import path from 'path';
 import express from 'express';
 import type { Application } from 'express';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import sanitizer from 'perfect-express-sanitizer';
