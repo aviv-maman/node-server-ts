@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import bookingController from '../controllers/bookingController';
-const authController = require('../controllers/authController');
+import { protect, restrictTo } from '../controllers/authController';
 
 export const bookingRouter = Router();
 
-bookingRouter.use(authController.protect);
+bookingRouter.use(protect);
 
 bookingRouter.get(
   '/checkout-session/:productId',
   bookingController.getCheckoutSession
 );
 
-bookingRouter.use(authController.restrictTo('admin', 'lead-guide'));
+bookingRouter.use(restrictTo('admin', 'lead-guide'));
 
 bookingRouter
   .route('/')

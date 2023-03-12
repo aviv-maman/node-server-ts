@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
-// import { promisify } from 'util';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -552,3 +551,21 @@ export const googleLogin = catchAsync(async (req, res, next) => {
   }
   verify().catch(console.error);
 });
+
+const authController = {
+  signup,
+  login,
+  logout,
+  protect,
+  restrictTo,
+  forgotPassword,
+  resetPassword,
+  updatePassword,
+  verifyEmail,
+  sendVerificationEmail,
+  sendNewAddressEmail,
+  changeEmail,
+  googleLogin,
+};
+
+export default authController;

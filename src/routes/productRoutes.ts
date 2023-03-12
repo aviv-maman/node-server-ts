@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import productController from '../controllers/productController';
-const authController = require('../controllers/authController');
+import { protect, restrictTo } from '../controllers/authController';
 import { reviewRouter } from './reviewRoutes';
 
 export const productRouter = Router();
@@ -20,8 +20,8 @@ productRouter.route('/product-stats').get(productController.getProductStats);
 productRouter
   .route('/monthly-plan/:year')
   .get(
-    authController.protect,
-    authController.restrictTo('admin', 'lead-guide', 'guide'),
+    protect,
+    restrictTo('admin', 'lead-guide', 'guide'),
     productController.getMonthlyPlan
   );
 
@@ -39,8 +39,8 @@ productRouter
   .route('/')
   .get(productController.getAllProducts)
   .post(
-    authController.protect,
-    authController.restrictTo('admin', 'lead-guide'),
+    protect,
+    restrictTo('admin', 'lead-guide'),
     productController.createProduct
   );
 
@@ -48,14 +48,14 @@ productRouter
   .route('/:id')
   .get(productController.getProduct)
   .patch(
-    authController.protect,
-    authController.restrictTo('admin', 'lead-guide'),
+    protect,
+    restrictTo('admin', 'lead-guide'),
     productController.uploadProductImages,
     productController.resizeProductImages,
     productController.updateProduct
   )
   .delete(
-    authController.protect,
-    authController.restrictTo('admin', 'lead-guide'),
+    protect,
+    restrictTo('admin', 'lead-guide'),
     productController.deleteProduct
   );
