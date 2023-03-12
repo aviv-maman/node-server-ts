@@ -1,5 +1,5 @@
 import { Router } from 'express';
-const reviewController = require('../controllers/reviewController');
+import reviewController from '../controllers/reviewController';
 import { protect, restrictTo } from '../controllers/authController';
 
 export const reviewRouter = Router({ mergeParams: true });

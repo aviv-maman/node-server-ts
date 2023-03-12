@@ -1,27 +1,27 @@
 import { ReviewModel } from '../models/reviewModel';
-import { NextFunction, Request, Response } from 'express';
-import {
-  createOne,
-  deleteOne,
-  getAll,
-  getOne,
-  updateOne,
-} from './handlerFactory';
-// const catchAsync = require('./../utils/catchAsync');
+import type { NextFunction, Request, Response } from 'express';
+import handlerFactory from './handlerFactory';
 
-export const setProductUserIds = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const setProductUserIds = (req: Request, res: Response, next: NextFunction) => {
   // Allow nested routes
   if (!req.body.product) req.body.product = req.params.productId;
   if (!req.body.user) req.body.user = req.user.id;
   next();
 };
 
-export const getAllReviews = getAll(ReviewModel);
-export const getReview = getOne(ReviewModel);
-export const createReview = createOne(ReviewModel);
-export const updateReview = updateOne(ReviewModel);
-export const deleteReview = deleteOne(ReviewModel);
+const getAllReviews = handlerFactory.getAll(ReviewModel);
+const getReview = handlerFactory.getOne(ReviewModel);
+const createReview = handlerFactory.createOne(ReviewModel);
+const updateReview = handlerFactory.updateOne(ReviewModel);
+const deleteReview = handlerFactory.deleteOne(ReviewModel);
+
+const reviewController = {
+  setProductUserIds,
+  getAllReviews,
+  getReview,
+  createReview,
+  updateReview,
+  deleteReview,
+};
+
+export default reviewController;

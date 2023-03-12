@@ -1,5 +1,5 @@
 import { Router } from 'express';
-const productController = require('../controllers/productController');
+import productController from '../controllers/productController';
 const authController = require('../controllers/authController');
 import { reviewRouter } from './reviewRoutes';
 

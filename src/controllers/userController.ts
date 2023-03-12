@@ -3,10 +3,10 @@ import type { FileFilterCallback } from 'multer';
 import sharp from 'sharp';
 import { UserModel } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
-import { AppError } from '../utils/appError';
-import { NextFunction, Request, Response } from 'express';
-import { deleteOne, getAll, getOne, updateOne } from './handlerFactory';
-import { uploadImageToCloudinary } from '../utils/upload';
+import AppError from '../utils/appError';
+import type { NextFunction, Request, Response } from 'express';
+import handlerFactory from './handlerFactory';
+import uploadImageToCloudinary from '../utils/upload';
 
 // const multerStorage = multer.diskStorage({
 //   destination: (req, file, cb) => {
@@ -36,9 +36,9 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 
-export const uploadUserPhoto = upload.single('photo');
+const uploadUserPhoto = upload.single('photo');
 
-export const resizeUserPhoto = catchAsync(async (req, res, next) => {
+const resizeUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
   // req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
@@ -69,12 +69,12 @@ const filterObj = (obj: Request['body'], ...allowedFields: string[]) => {
   return newObj;
 };
 
-export const getMe = (req: Request, res: Response, next: NextFunction) => {
+const getMe = (req: Request, res: Response, next: NextFunction) => {
   req.params.id = req.user.id;
   next();
 };
 
-export const updateMe = catchAsync(async (req, res, next) => {
+const updateMe = catchAsync(async (req, res, next) => {
   // 1) Create error if user POSTs password data
   if (req.body.password || req.body.passwordConfirm) {
     return next(
@@ -120,7 +120,7 @@ export const updateMe = catchAsync(async (req, res, next) => {
   });
 });
 
-export const deleteMe = catchAsync(async (req, res, next) => {
+const deleteMe = catchAsync(async (req, res, next) => {
   await UserModel.findByIdAndUpdate(req.user.id, { active: false });
 
   res.status(204).json({
@@ -129,16 +129,31 @@ export const deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-export const createUser = (req: Request, res: Response) => {
+const createUser = (req: Request, res: Response) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not yet defined! Please use /signup instead',
   });
 };
 
-export const getUser = getOne(UserModel);
-export const getAllUsers = getAll(UserModel);
+const getUser = handlerFactory.getOne(UserModel);
+const getAllUsers = handlerFactory.getAll(UserModel);
 
 // Do NOT update passwords with this!
-export const updateUser = updateOne(UserModel);
-export const deleteUser = deleteOne(UserModel);
+const updateUser = handlerFactory.updateOne(UserModel);
+const deleteUser = handlerFactory.deleteOne(UserModel);
+
+const userController = {
+  createUser,
+  getUser,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+  getMe,
+  updateMe,
+  deleteMe,
+  uploadUserPhoto,
+  resizeUserPhoto,
+};
+
+export default userController;

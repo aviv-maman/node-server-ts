@@ -1,10 +1,10 @@
 import { catchAsync } from '../utils/catchAsync';
-import { AppError } from '../utils/appError';
+import AppError from '../utils/appError';
 import { Model } from 'mongoose';
 import type { FilterQuery } from 'mongoose';
-import { APIFeatures } from '../utils/apiFeatures';
+import APIFeatures from '../utils/apiFeatures';
 
-export const deleteOne = (Model: Model<any>) =>
+const deleteOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 
@@ -18,7 +18,7 @@ export const deleteOne = (Model: Model<any>) =>
     });
   });
 
-export const updateOne = (Model: Model<any>) =>
+const updateOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true, // To send back the updated object
@@ -35,7 +35,7 @@ export const updateOne = (Model: Model<any>) =>
     });
   });
 
-export const createOne = (Model: Model<any>) =>
+const createOne = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
 
@@ -45,7 +45,7 @@ export const createOne = (Model: Model<any>) =>
     });
   });
 
-export const getOne = (
+const getOne = (
   Model: Model<any>,
   popOptions?: {
     path?: string; //children
@@ -75,7 +75,7 @@ export const getOne = (
     });
   });
 
-export const getAll = (Model: Model<any>) =>
+const getAll = (Model: Model<any>) =>
   catchAsync(async (req, res, next) => {
     // To allow for nested GET reviews on product (hack)
     let filter = {} as FilterQuery<any>;
@@ -121,3 +121,13 @@ export const getAll = (Model: Model<any>) =>
       totalCount,
     });
   });
+
+const handlerFactory = {
+  deleteOne,
+  updateOne,
+  createOne,
+  getOne,
+  getAll,
+};
+
+export default handlerFactory;

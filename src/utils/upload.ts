@@ -1,12 +1,9 @@
 import { UploadApiOptions, v2 as cloudinary } from 'cloudinary';
-import { NextFunction, Request } from 'express';
-import { cloudinaryOptions } from '../configs/cloudinary';
-import { AppError } from './appError';
+import type { NextFunction, Request } from 'express';
+import cloudinaryOptions from '../configs/cloudinary';
+import AppError from './appError';
 
-export const uploadImageToCloudinary = async (
-  req: Request,
-  next: NextFunction
-) => {
+const uploadImageToCloudinary = async (req: Request, next: NextFunction) => {
   const { apiKey, apiSecret, cloudName, uploadFolder, resourceType } =
     cloudinaryOptions;
 
@@ -43,3 +40,5 @@ export const uploadImageToCloudinary = async (
     return next(new AppError(stringifiedError, 400));
   }
 };
+
+export default uploadImageToCloudinary;

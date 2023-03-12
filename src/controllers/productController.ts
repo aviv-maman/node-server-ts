@@ -3,15 +3,9 @@ import type { FileFilterCallback } from 'multer';
 import sharp from 'sharp';
 import { ProductModel } from '../models/productModel';
 import { catchAsync } from '../utils/catchAsync';
-import {
-  createOne,
-  deleteOne,
-  getAll,
-  getOne,
-  updateOne,
-} from './handlerFactory';
+import handlerFactory from './handlerFactory';
 import type { NextFunction, Request, Response } from 'express';
-import { AppError } from '../utils/appError';
+import AppError from '../utils/appError';
 
 const multerStorage = multer.memoryStorage();
 
@@ -32,7 +26,7 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 
-export const uploadProductImages = upload.fields([
+const uploadProductImages = upload.fields([
   { name: 'imageCover', maxCount: 1 },
   { name: 'images', maxCount: 3 },
 ]);
@@ -40,7 +34,7 @@ export const uploadProductImages = upload.fields([
 // upload.single('image') req.file
 // upload.array('images', 5) req.files
 
-export const resizeProductImages = catchAsync(async (req, res, next) => {
+const resizeProductImages = catchAsync(async (req, res, next) => {
   if (!req?.files?.imageCover || !req.files.images) return next();
 
   // 1) Cover image
@@ -71,24 +65,20 @@ export const resizeProductImages = catchAsync(async (req, res, next) => {
   next();
 });
 
-export const aliasTopProducts = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const aliasTopProducts = (req: Request, res: Response, next: NextFunction) => {
   req.query.limit = '5';
   req.query.sort = '-ratingsAverage,price';
   req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
   next();
 };
 
-export const getAllProducts = getAll(ProductModel);
-export const getProduct = getOne(ProductModel, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
-export const createProduct = createOne(ProductModel);
-export const updateProduct = updateOne(ProductModel);
-export const deleteProduct = deleteOne(ProductModel);
+const getAllProducts = handlerFactory.getAll(ProductModel);
+const getProduct = handlerFactory.getOne(ProductModel, { path: 'reviews' }); // { path: 'reviews', select: '__v' });
+const createProduct = handlerFactory.createOne(ProductModel);
+const updateProduct = handlerFactory.updateOne(ProductModel);
+const deleteProduct = handlerFactory.deleteOne(ProductModel);
 
-export const getProductStats = catchAsync(async (req, res, next) => {
+const getProductStats = catchAsync(async (req, res, next) => {
   const stats = await ProductModel.aggregate([
     {
       $match: { ratingsAverage: { $gte: 4.5 } },
@@ -120,7 +110,7 @@ export const getProductStats = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getMonthlyPlan = catchAsync(async (req, res, next) => {
+const getMonthlyPlan = catchAsync(async (req, res, next) => {
   const year = Number(req.params.year) * 1; // 2021
 
   const plan = await ProductModel.aggregate([
@@ -168,7 +158,7 @@ export const getMonthlyPlan = catchAsync(async (req, res, next) => {
 
 // /products-within/:distance/center/:latlng/unit/:unit
 // /products-within/233/center/34.111745,-118.113491/unit/mi
-export const getProductsWithin = catchAsync(async (req, res, next) => {
+const getProductsWithin = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
   const [lat, lng] = latlng.split(',');
 
@@ -197,7 +187,7 @@ export const getProductsWithin = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getDistances = catchAsync(async (req, res, next) => {
+const getDistances = catchAsync(async (req, res, next) => {
   const { latlng, unit } = req.params;
   const [lat, lng] = latlng.split(',');
 
@@ -238,3 +228,20 @@ export const getDistances = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const productController = {
+  uploadProductImages,
+  resizeProductImages,
+  aliasTopProducts,
+  getAllProducts,
+  getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProductStats,
+  getMonthlyPlan,
+  getProductsWithin,
+  getDistances,
+};
+
+export default productController;

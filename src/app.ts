@@ -9,7 +9,7 @@ import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
-import { AppError } from './utils/appError';
+import AppError from './utils/appError';
 import { globalErrorHandler } from './controllers/errorController';
 import { productRouter } from './routes/productRoutes';
 import { userRouter } from './routes/userRoutes';

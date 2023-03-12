@@ -16,7 +16,7 @@ type QueryString = {
   count?: number;
 };
 
-export class APIFeatures {
+class APIFeatures {
   query: Query<any, any, any, any>;
   queryString: QueryString;
   constructor(query: Query<any, any, any, any>, queryString: QueryString) {
@@ -220,3 +220,5 @@ export class APIFeatures {
     return this;
   }
 }
+
+export default APIFeatures;

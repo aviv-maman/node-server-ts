@@ -2,7 +2,7 @@ import type { UploadApiOptions } from 'cloudinary';
 
 require('dotenv').config({ path: '../config.env' });
 
-export const cloudinaryOptions = {
+const cloudinaryOptions = {
   cloudName: process.env.CLOUDINARY_CLOUD_NAME,
   apiKey: process.env.CLOUDINARY_API_KEY,
   apiSecret: process.env.CLOUDINARY_API_SECRET,
@@ -12,3 +12,5 @@ export const cloudinaryOptions = {
   prefix: process.env.CLOUDINARY_SOURCE_PREFIX,
   uploadFolder: process.env.CLOUDINARY_UPLOAD_FOLDER,
 };
+
+export default cloudinaryOptions;

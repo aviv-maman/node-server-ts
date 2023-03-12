@@ -7,7 +7,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { UserModel } from '../models/userModel';
 import type { User } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
-import { AppError } from '../utils/appError';
+import AppError from '../utils/appError';
 import { sendEmail } from '../utils/email';
 import type { HydratedDocument } from 'mongoose';
 import { omit } from 'lodash';
