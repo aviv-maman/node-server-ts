@@ -11,6 +11,8 @@ import { sendEmail } from '../utils/email';
 import type { HydratedDocument } from 'mongoose';
 import { omit } from 'lodash';
 
+type JwtPayloadExtended = JwtPayload & { id: string };
+
 const signToken = (id: string) =>
   jwtSign({ id }, process.env.JWT_SECRET ?? '', {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -47,11 +49,11 @@ const createSendToken = (
 const verifyToken = async (
   token: string,
   secret: string
-): Promise<JwtPayload> => {
+): Promise<JwtPayloadExtended> => {
   return new Promise((resolve, reject) => {
     jwtVerify(token, secret, (err, decoded) => {
       if (err) return reject(err);
-      resolve(decoded as JwtPayload);
+      resolve(decoded as JwtPayloadExtended);
     });
   });
 };
@@ -292,7 +294,6 @@ export const updatePassword = catchAsync(async (req, res, next) => {
 });
 
 export const verifyEmail = catchAsync(async (req, res, next) => {
-  // const { token } = req.params;
   // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
@@ -300,13 +301,6 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
     .digest('hex');
 
   try {
-    // const {
-    //   user: { id },
-    // } = jwt.verify(token, process.env.JWT_SECRET);
-    // mark the email address as verified in the database
-    // const user = await User.findByIdAndUpdate(id, { isEmailVerified: true });
-    // const user = await User.findById(id);
-
     const user = await UserModel.findOne({
       emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: Date.now() },
@@ -324,7 +318,6 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
       .status(200)
       .json({ success: true, message: 'Email verified successfully' });
   } catch (error) {
-    // return res.status(400).json({ message: 'Invalid token' });
     return next(new AppError('Invalid token or token has expired', 400));
   }
 });

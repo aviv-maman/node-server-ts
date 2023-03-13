@@ -11,14 +11,10 @@ declare module 'perfect-express-sanitizer' {
     }
   ): any;
   function clean(
-    options?: {},
+    options?: object,
     whiteList?: any[],
     only?: string[]
   ): (req: any, res: any, next: any) => void;
-}
-
-declare module 'xss-clean' {
-  function xss(): void;
 }
 
 interface Files {
