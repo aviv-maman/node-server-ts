@@ -89,12 +89,8 @@ export const login = catchAsync(async (req, res, next) => {
 });
 
 export const logout = (req: Request, res: Response) => {
-  // res.cookie('jwt', 'logged_out', {
-  //   expires: new Date(Date.now() + 10 * 1000),
-  //   httpOnly: true,
-  // });
   res.clearCookie('jwt');
-  res.status(200).json({ status: 'success' });
+  res.status(200).json({ success: true });
 };
 
 export const protect = catchAsync(async (req, res, next) => {
@@ -143,39 +139,31 @@ export const protect = catchAsync(async (req, res, next) => {
 });
 
 // Only for rendered pages, no errors!
-export const isLoggedIn = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const isLoggedIn = catchAsync(async (req, res, next) => {
   if (req.cookies.jwt) {
-    try {
-      // 1) verify token
-      const decoded = await verifyToken(
-        req.cookies.jwt,
-        process.env.JWT_SECRET ?? ''
-      );
+    // 1) verify token
+    const decoded = await verifyToken(
+      req.cookies.jwt,
+      process.env.JWT_SECRET ?? ''
+    );
 
-      // 2) Check if user still exists
-      const currentUser = await UserModel.findById(decoded.id);
-      if (!currentUser) {
-        return next();
-      }
-
-      // 3) Check if user changed password after the token was issued
-      if (currentUser.changedPasswordAfter(decoded.iat)) {
-        return next();
-      }
-
-      // THERE IS A LOGGED IN USER
-      res.locals.user = currentUser;
-      return next();
-    } catch (err) {
+    // 2) Check if user still exists
+    const currentUser = await UserModel.findById(decoded.id);
+    if (!currentUser) {
       return next();
     }
+
+    // 3) Check if user changed password after the token was issued
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next();
+    }
+
+    // THERE IS A LOGGED IN USER
+    res.locals.user = currentUser;
+    return next();
   }
   next();
-};
+});
 
 export const restrictTo =
   (...roles: User['role'][]) =>
@@ -300,26 +288,22 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
     .update(req.params.token)
     .digest('hex');
 
-  try {
-    const user = await UserModel.findOne({
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: Date.now() },
-    });
+  const user = await UserModel.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationExpires: { $gt: Date.now() },
+  });
 
-    // 2) If token has not expired, verify the email
-    if (!user) {
-      return next(new AppError('User was not found or token is invalid', 400));
-    }
-    user.isEmailVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-    return res
-      .status(200)
-      .json({ success: true, message: 'Email verified successfully' });
-  } catch (error) {
-    return next(new AppError('Invalid token or token has expired', 400));
+  // 2) If token has not expired, verify the email
+  if (!user) {
+    return next(new AppError('User was not found or token is invalid', 400));
   }
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json({ success: true, message: 'Email verified successfully' });
 });
 
 export const sendVerificationEmail = catchAsync(async (req, res, next) => {
@@ -413,7 +397,7 @@ export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 1) Get user based on POSTed email and check if it is verified and if password is correct
+  // 2) Get user based on POSTed email and check if it is verified and if password is correct
   const user = await UserModel.findOne({ email: req.body.currentEmail }).select(
     '+password'
   );
@@ -434,12 +418,12 @@ export const sendNewAddressEmail = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2) Generate the random token
+  // 3) Generate the random token
   const newEmailToken = user.createNewEmailToken();
   user.candidateEmail = req.body.newEmail;
   await user.save({ validateBeforeSave: false }); // turn off validation because we don't want to validate the passwordConfirm field
 
-  // 3) Send it to user's email
+  // 4) Send it to user's email
   const emailURL = `${req.get('origin')}/profile/new-email/${newEmailToken}`;
 
   const message = `Click on the link to verify your email address: ${emailURL}.\nIf you didn't ask to change your email, please ignore this email!`;
@@ -477,72 +461,57 @@ export const changeEmail = catchAsync(async (req, res, next) => {
     .update(req.params.token)
     .digest('hex');
 
-  try {
-    const user = await UserModel.findOne({
-      newEmailToken: hashedToken,
-      newEmailExpires: { $gt: Date.now() },
-    }).select('+candidateEmail');
+  const user = await UserModel.findOne({
+    newEmailToken: hashedToken,
+    newEmailExpires: { $gt: Date.now() },
+  }).select('+candidateEmail');
 
-    // 2) If token has not expired, verify the email
-    if (!user) {
-      return next(new AppError('User was not found or token is invalid', 400));
-    }
-    if (user.candidateEmail) user.email = user.candidateEmail;
-    user.candidateEmail = undefined;
-    user.newEmailToken = undefined;
-    user.newEmailExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-    return res
-      .status(200)
-      .json({ success: true, message: 'Email was changed successfully' });
-  } catch (error) {
-    return next(new AppError('Invalid token or token has expired', 400));
+  // 2) If token has not expired, verify the email
+  if (!user) {
+    return next(new AppError('User was not found or token is invalid', 400));
   }
+  if (user.candidateEmail) user.email = user.candidateEmail;
+  user.candidateEmail = undefined;
+  user.newEmailToken = undefined;
+  user.newEmailExpires = undefined;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json({ success: true, message: 'Email was changed successfully' });
 });
 
 export const googleLogin = catchAsync(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  async function verify() {
-    const ticket = await client.verifyIdToken({
-      idToken: req.body.idToken,
-      audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
-      // Or, if multiple clients access the backend:
-      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+  const ticket = await client.verifyIdToken({
+    idToken: req.body.idToken,
+    audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
+  });
+  const payload = ticket.getPayload();
+  const userId = payload?.sub;
+  let user = await UserModel.findOne({ googleId: userId });
+  if (user) {
+    createSendToken(user, 200, res);
+  } else {
+    const isEmailAlreadyRegistered = await UserModel.findOne({
+      email: payload?.email,
     });
-    const payload = ticket.getPayload();
-    const userId = payload?.sub;
-    // If request specified a G Suite domain:
-    // const domain = payload['hd'];
-    try {
-      let user = await UserModel.findOne({ googleId: userId });
-      if (user) {
-        createSendToken(user, 200, res);
-      } else {
-        const isEmailAlreadyRegistered = await UserModel.findOne({
-          email: payload?.email,
-        });
-        if (isEmailAlreadyRegistered) {
-          isEmailAlreadyRegistered.googleId = userId;
-          isEmailAlreadyRegistered.save({ validateBeforeSave: false });
-          user = isEmailAlreadyRegistered;
-        } else {
-          const newUser = await new UserModel({
-            email: payload?.email,
-            googleId: userId,
-            firstName: payload?.given_name,
-            lastName: payload?.family_name,
-            photo: payload?.picture,
-            locale: payload?.locale,
-          }).save({ validateBeforeSave: false });
-          user = newUser;
-        }
-        createSendToken(user, 200, res);
-      }
-    } catch (error) {
-      return next(new AppError('Incorrect token', 401));
+    if (isEmailAlreadyRegistered) {
+      isEmailAlreadyRegistered.googleId = userId;
+      isEmailAlreadyRegistered.save({ validateBeforeSave: false });
+      user = isEmailAlreadyRegistered;
+    } else {
+      const newUser = await new UserModel({
+        email: payload?.email,
+        googleId: userId,
+        firstName: payload?.given_name,
+        lastName: payload?.family_name,
+        photo: payload?.picture,
+        locale: payload?.locale,
+      }).save({ validateBeforeSave: false });
+      user = newUser;
     }
+    createSendToken(user, 200, res);
   }
-  verify().catch(console.error);
 });
 
 const authController = {

@@ -22,11 +22,13 @@ const handleValidationErrorDB = (err: MongooseError.ValidationError) => {
   return new AppError(message, 400);
 };
 
-const handleJWTError = () =>
-  new AppError('Invalid token. Please log in again!', 401);
+const handleJWTError = () => {
+  return new AppError('Invalid token. Please log in again!', 401);
+};
 
-const handleJWTExpiredError = () =>
-  new AppError('Your token has expired! Please log in again.', 401);
+const handleJWTExpiredError = () => {
+  return new AppError('Your token has expired! Please log in again.', 401);
+};
 
 const sendErrorDev = (err: AppError, req: Request, res: Response) => {
   // To send error only
@@ -94,8 +96,14 @@ const sendErrorProd = (err: AppError, req: Request, res: Response) => {
   });
 };
 
+type Errors =
+  | AppError
+  | MongooseError.CastError
+  | MongoServerError
+  | MongooseError.ValidationError;
+
 const globalErrorHandler = (
-  err: AppError | MongooseError.CastError | MongoServerError,
+  err: Errors,
   req: Request,
   res: Response,
   next: NextFunction
