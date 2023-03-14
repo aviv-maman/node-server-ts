@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { NextFunction, Request, Response } from 'express';
+import type { CookieOptions, NextFunction, Request, Response } from 'express';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -24,7 +24,7 @@ const createSendToken = (
   res: Response
 ) => {
   const token = signToken(user._id as unknown as string);
-  const cookieOptions = {
+  const cookieOptions: CookieOptions = {
     expires: new Date(
       Date.now() +
         Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000
