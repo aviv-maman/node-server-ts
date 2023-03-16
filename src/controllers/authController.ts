@@ -90,6 +90,15 @@ export const login = catchAsync(async (req, res, next) => {
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie('jwt');
+
+  // req.session.destroy((err) => {
+  //   if (err) {
+  //     const error: Error = err;
+  //     console.log(err);
+  //     return new AppError(error.message, 500);
+  //   }
+  //   res.clearCookie(process.env.EXPRESS_SESSION_NAME ?? 'sid');
+  // });
   res.status(200).json({ success: true });
 };
 
@@ -481,7 +490,11 @@ export const changeEmail = catchAsync(async (req, res, next) => {
 });
 
 export const googleLogin = catchAsync(async (req, res, next) => {
-  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const client = new OAuth2Client({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUri: process.env.GOOGLE_REDIRECT_URI,
+  });
   const ticket = await client.verifyIdToken({
     idToken: req.body.idToken,
     audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
@@ -490,6 +503,7 @@ export const googleLogin = catchAsync(async (req, res, next) => {
   const userId = payload?.sub;
   let user = await UserModel.findOne({ googleId: userId });
   if (user) {
+    req.session.user = user.id;
     createSendToken(user, 200, res);
   } else {
     const isEmailAlreadyRegistered = await UserModel.findOne({
@@ -510,8 +524,58 @@ export const googleLogin = catchAsync(async (req, res, next) => {
       }).save({ validateBeforeSave: false });
       user = newUser;
     }
+    req.session.user = user.id;
     createSendToken(user, 200, res);
   }
+});
+
+export const googleLoginCode = catchAsync(async (req, res, next) => {
+  const client = new OAuth2Client({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUri: process.env.GOOGLE_REDIRECT_URI,
+  });
+
+  const scopes = [process.env.GOOGLE_AUTH_SCOPES ?? ''];
+
+  // const code = req.headers.code?.toString() ?? '';
+  const { code } = req.body;
+  const q = code?.toString() ?? '';
+  console.log(code);
+  client.getToken(q, async (err, tokens) => {
+    if (tokens) {
+      console.log(tokens);
+      client.setCredentials(tokens);
+    }
+    if (err) {
+      console.log(err);
+      return next(new AppError(err.name + err.message, 500));
+    }
+  });
+  //   const oauth2 = google.oauth2({
+  //     auth: client,
+  //     version: 'v2',
+  //   });
+
+  //   oauth2.userinfo.get((err, response) => {
+  //     if (err) {
+  //       return next(new AppError('Error retrieving user info', 500));
+  //     }
+  //     const userId = response?.data?.id;
+  //   });
+  // });
+
+  // // Generate a url that asks permissions for the Drive activity scope
+  // const authorizationUrl = client.generateAuthUrl({
+  //   // 'online' (default) or 'offline' (gets refresh_token)
+  //   access_type: 'offline',
+  //   /** Pass in the scopes array defined above.
+  //    * Alternatively, if only one scope is needed, you can pass a scope URL as a string */
+  //   scope: scopes,
+  //   // Enable incremental authorization. Recommended as a best practice.
+  //   include_granted_scopes: true,
+  // });
+  //////////
 });
 
 const authController = {
@@ -528,6 +592,7 @@ const authController = {
   sendNewAddressEmail,
   changeEmail,
   googleLogin,
+  googleLoginCode,
 };
 
 export default authController;

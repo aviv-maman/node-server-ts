@@ -8,7 +8,8 @@ userRouter.post('/signup', authController.signup);
 userRouter.post('/login', authController.login);
 userRouter.get('/logout', authController.logout);
 
-userRouter.post('/auth-google', authController.googleLogin);
+userRouter.post('/auth/google', authController.googleLogin);
+userRouter.post('/auth/google/code', authController.googleLoginCode);
 // userRouter.post('/auth/facebook', authController.facebookLogin);
 
 userRouter.post('/forgotPassword', authController.forgotPassword);

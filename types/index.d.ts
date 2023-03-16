@@ -28,10 +28,20 @@ declare namespace Express {
       publicPath?: string;
     }
   }
+
   interface Request {
     requestTime?: string;
     user?: any;
     file?: Express.Multer.File;
     files?: Files;
+    session: SessionExpress & Partial<SessionDataExpress> & CustomSessionFields;
   }
+
+  interface CustomSessionFields {
+    user?: string;
+  }
+
+  type RequestExpress = import('express-serve-static-core').Request;
+  type SessionExpress = import('express-session').Session;
+  type SessionDataExpress = import('express-session').SessionData;
 }
