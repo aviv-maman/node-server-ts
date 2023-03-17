@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import type { CookieOptions, NextFunction, Request, Response } from 'express';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
-import { OAuth2Client } from 'google-auth-library';
+import { Credentials, JWT, OAuth2Client } from 'google-auth-library';
 import { UserModel } from '../models/userModel';
 import type { User } from '../models/userModel';
 import { catchAsync } from '../utils/catchAsync';
@@ -495,32 +495,37 @@ export const googleLogin = catchAsync(async (req, res, next) => {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: process.env.GOOGLE_REDIRECT_URI,
   });
-  const ticket = await client.verifyIdToken({
+  if (!req.body.idToken) {
+    return next(new AppError('Authentication failed. Please try again.', 401));
+  }
+  const loginTicket = await client.verifyIdToken({
     idToken: req.body.idToken,
     audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
   });
-  const payload = ticket.getPayload();
-  const userId = payload?.sub;
-  let user = await UserModel.findOne({ googleId: userId });
+  const tokenPayload = loginTicket.getPayload();
+  if (!tokenPayload?.sub) {
+    return next(new AppError('verification failed. Please try again.', 401));
+  }
+  let user = await UserModel.findOne({ googleId: tokenPayload?.sub });
   if (user) {
     req.session.user = user.id;
     createSendToken(user, 200, res);
   } else {
     const isEmailAlreadyRegistered = await UserModel.findOne({
-      email: payload?.email,
+      email: tokenPayload?.email,
     });
     if (isEmailAlreadyRegistered) {
-      isEmailAlreadyRegistered.googleId = userId;
+      isEmailAlreadyRegistered.googleId = tokenPayload?.sub;
       isEmailAlreadyRegistered.save({ validateBeforeSave: false });
       user = isEmailAlreadyRegistered;
     } else {
       const newUser = await new UserModel({
-        email: payload?.email,
-        googleId: userId,
-        firstName: payload?.given_name,
-        lastName: payload?.family_name,
-        photo: payload?.picture,
-        locale: payload?.locale,
+        email: tokenPayload?.email,
+        googleId: tokenPayload?.sub,
+        firstName: tokenPayload?.given_name,
+        lastName: tokenPayload?.family_name,
+        photo: tokenPayload?.picture,
+        locale: tokenPayload?.locale,
       }).save({ validateBeforeSave: false });
       user = newUser;
     }
@@ -530,10 +535,10 @@ export const googleLogin = catchAsync(async (req, res, next) => {
 });
 
 export const googleLoginCode = catchAsync(async (req, res, next) => {
-  const client = new OAuth2Client({
+  const oauth2Client = new OAuth2Client({
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    redirectUri: process.env.GOOGLE_REDIRECT_URI,
+    redirectUri: 'http://localhost:3000' ?? process.env.GOOGLE_REDIRECT_URI,
   });
 
   const base64Code = req.body.code as string;
@@ -549,44 +554,93 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
     );
   }
 
-  client.getToken(convertedCode, async (err, credentials) => {
-    if (credentials) {
-      console.log(credentials);
-      // client.setCredentials(credentials);
-    }
-    if (err) {
-      console.log(err);
-      return next(
-        new AppError(
-          `${err.response?.data?.error_description}: ${err.response?.data?.error}`,
-          err.response?.status
-        )
-      );
-    }
-  });
-
-  //   const oauth2 = google.oauth2({
-  //     auth: client,
-  //     version: 'v2',
-  //   });
-
-  //   oauth2.userinfo.get((err, response) => {
-  //     if (err) {
-  //       return next(new AppError('Error retrieving user info', 500));
-  //     }
-  //     const userId = response?.data?.id;
-  //   });
+  // client.on('tokens', (tokens) => {
+  //   if (tokens.refresh_token) {
+  //     // store the refresh_token in my database!
+  //     console.log(tokens.refresh_token);
+  //   }
+  //   console.log(tokens.access_token);
   // });
 
-  // // Generate a url that asks permissions for the Drive activity scope
-  // const authorizationUrl = client.generateAuthUrl({
-  //   // 'online' (default) or 'offline' (gets refresh_token)
-  //   access_type: 'offline',
-  //   /** Pass in the scopes array defined above.
-  //    * Alternatively, if only one scope is needed, you can pass a scope URL as a string */
-  //   scope: scopes,
-  //   // Enable incremental authorization. Recommended as a best practice.
-  //   include_granted_scopes: true,
+  const getTokenAsync = (): Promise<Credentials> => {
+    return new Promise((resolve, reject) => {
+      oauth2Client.getToken(convertedCode, async (err, credentials) => {
+        if (err) {
+          reject(err);
+          return next(
+            new AppError(
+              `${err.response?.data?.error_description}: ${err.response?.data?.error}`,
+              err.response?.status
+            )
+          );
+        }
+        if (credentials) {
+          console.log('getTokenAsync', credentials);
+          oauth2Client.setCredentials(credentials);
+          // req.session.user = credentials.refresh_token as string;
+          resolve(credentials);
+        }
+      });
+    });
+  };
+
+  const tokens = await getTokenAsync();
+
+  const getAccessTokenInfoAsync = async () => {
+    if (oauth2Client.credentials?.access_token) {
+      const tokenInfo = await oauth2Client.getTokenInfo(
+        oauth2Client.credentials?.access_token
+      );
+      return tokenInfo;
+    }
+  };
+
+  const accessTokenInfo = await getAccessTokenInfoAsync();
+
+  if (!tokens?.id_token) {
+    return next(new AppError('Authentication failed. Please try again.', 401));
+  } else {
+    const loginTicket = await oauth2Client.verifyIdToken({
+      idToken: tokens?.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
+    });
+    if (!accessTokenInfo?.sub) {
+      return next(new AppError('verification failed. Please try again.', 401));
+    }
+    const tokenPayload = loginTicket.getPayload();
+    let user = await UserModel.findOne({ googleId: tokenPayload?.sub });
+    if (user) {
+      // req.session.user = user.id;
+      createSendToken(user, 200, res);
+    } else {
+      const isEmailAlreadyRegistered = await UserModel.findOne({
+        email: tokenPayload?.email,
+      });
+      if (isEmailAlreadyRegistered) {
+        isEmailAlreadyRegistered.googleId = tokenPayload?.sub;
+        isEmailAlreadyRegistered.save({ validateBeforeSave: false });
+        user = isEmailAlreadyRegistered;
+      } else {
+        const newUser = await new UserModel({
+          email: tokenPayload?.email,
+          googleId: tokenPayload?.sub,
+          firstName: tokenPayload?.given_name,
+          lastName: tokenPayload?.family_name,
+          photo: tokenPayload?.picture,
+          locale: tokenPayload?.locale,
+        }).save({ validateBeforeSave: false });
+        user = newUser;
+      }
+      req.session.user = user.id;
+      console.log('user', user);
+      createSendToken(user, 200, res);
+    }
+  }
+
+  // const jwtClient = new JWT({
+  //   email: tokenInfo.email,
+  //   // key: process.env.JWT_SECRET ?? 'secret',
+  //   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
   // });
   //////////
 });
