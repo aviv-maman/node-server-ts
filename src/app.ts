@@ -10,7 +10,6 @@ import mongoSanitize from 'express-mongo-sanitize';
 import sanitizer from 'perfect-express-sanitizer';
 import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
-import bodyParser from 'body-parser';
 import compression from 'compression';
 import cors from 'cors';
 import session from 'express-session';
@@ -43,12 +42,6 @@ app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
 
 // Set security HTTP headers
 app.use(helmet());

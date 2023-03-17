@@ -536,22 +536,35 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
     redirectUri: process.env.GOOGLE_REDIRECT_URI,
   });
 
-  const scopes = [process.env.GOOGLE_AUTH_SCOPES ?? ''];
+  const base64Code = req.body.code as string;
+  const convertedCode = decodeURIComponent(atob(base64Code));
 
-  // const code = req.headers.code?.toString() ?? '';
-  const { code } = req.body;
-  const q = code?.toString() ?? '';
-  console.log(code);
-  client.getToken(q, async (err, tokens) => {
-    if (tokens) {
-      console.log(tokens);
-      client.setCredentials(tokens);
+  const xRequestedWith = req.headers['x-requested-with'];
+  if (xRequestedWith !== 'XmlHttpRequest') {
+    return next(
+      new AppError(
+        'This route is not available for this request type. Please use XmlHttpRequest',
+        400
+      )
+    );
+  }
+
+  client.getToken(convertedCode, async (err, credentials) => {
+    if (credentials) {
+      console.log(credentials);
+      // client.setCredentials(credentials);
     }
     if (err) {
       console.log(err);
-      return next(new AppError(err.name + err.message, 500));
+      return next(
+        new AppError(
+          `${err.response?.data?.error_description}: ${err.response?.data?.error}`,
+          err.response?.status
+        )
+      );
     }
   });
+
   //   const oauth2 = google.oauth2({
   //     auth: client,
   //     version: 'v2',
