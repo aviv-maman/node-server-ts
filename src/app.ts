@@ -1,6 +1,7 @@
 //Description: This file is the entry point of the application
-//3rd party imports
+//Built-In Node Modules
 import path from 'path';
+//3rd party Modules
 import express from 'express';
 import type { Application } from 'express';
 import morgan from 'morgan';

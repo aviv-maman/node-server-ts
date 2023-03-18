@@ -578,7 +578,6 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
           );
         }
         if (credentials) {
-          console.log('getTokenAsync', credentials);
           oauth2Client.setCredentials(credentials);
           resolve(credentials);
         }
