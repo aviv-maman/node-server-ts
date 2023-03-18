@@ -12,7 +12,6 @@ import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import cors from 'cors';
-import session from 'express-session';
 //Error handling
 import AppError from './utils/appError';
 import globalErrorHandler from './controllers/errorController';
@@ -63,24 +62,6 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
-
-app.use(
-  session({
-    name: process.env.EXPRESS_SESSION_NAME,
-    resave: false,
-    saveUninitialized: false,
-    secret:
-      process.env.EXPRESS_SESSION_SECRET ?? 'aL0ng$tr!ng0fL3tt3r$AndNumb3r$',
-    cookie: {
-      maxAge: Number(process.env.EXPRESS_SESSION_AGE),
-      sameSite: true,
-      secure: process.env.NODE_ENV === 'development' ? false : true,
-      httpOnly: true,
-      // signed: true,
-      // encode: String,
-    },
-  })
-);
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());

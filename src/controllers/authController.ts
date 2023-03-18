@@ -1,22 +1,32 @@
+//Built-In Node Modules
 import crypto from 'crypto';
+//3rd Party Modules
 import type { CookieOptions, NextFunction, Request, Response } from 'express';
 import { sign as jwtSign, verify as jwtVerify } from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
-import { Credentials, JWT, OAuth2Client } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
+import type { Credentials } from 'google-auth-library';
+import type { HydratedDocument } from 'mongoose';
+import { omit } from 'lodash';
+//User Model
 import { UserModel } from '../models/userModel';
 import type { User } from '../models/userModel';
+//Utils
 import { catchAsync } from '../utils/catchAsync';
 import AppError from '../utils/appError';
 import { sendEmail } from '../utils/email';
-import type { HydratedDocument } from 'mongoose';
-import { omit } from 'lodash';
 
 type JwtPayloadExtended = JwtPayload & { id: string };
 
-const signToken = (id: string) =>
-  jwtSign({ id }, process.env.JWT_SECRET ?? '', {
+const signToken = (id: string) => {
+  return jwtSign({ id }, process.env.JWT_SECRET ?? '', {
+    algorithm: 'HS256',
     expiresIn: process.env.JWT_EXPIRES_IN,
+    issuer: process.env.JWT_ISSUER,
+    subject: id.toString(),
+    jwtid: crypto.randomUUID(),
   });
+};
 
 const createSendToken = (
   user: HydratedDocument<User>,
@@ -30,9 +40,10 @@ const createSendToken = (
         Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    domain: process.env.NODE_ENV === 'development' ? undefined : 'localhost',
   };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
   res.cookie('jwt', token, cookieOptions);
 
@@ -46,15 +57,21 @@ const createSendToken = (
   });
 };
 
-const verifyToken = async (
-  token: string,
-  secret: string
-): Promise<JwtPayloadExtended> => {
+const verifyToken = async (token: string): Promise<JwtPayloadExtended> => {
   return new Promise((resolve, reject) => {
-    jwtVerify(token, secret, (err, decoded) => {
-      if (err) return reject(err);
-      resolve(decoded as JwtPayloadExtended);
-    });
+    jwtVerify(
+      token,
+      process.env.JWT_SECRET ?? '',
+      {
+        maxAge: process.env.JWT_EXPIRES_IN,
+        algorithms: ['HS256'],
+        issuer: process.env.JWT_ISSUER,
+      },
+      (err, decoded) => {
+        if (err) return reject(err);
+        resolve(decoded as JwtPayloadExtended);
+      }
+    );
   });
 };
 
@@ -90,15 +107,6 @@ export const login = catchAsync(async (req, res, next) => {
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie('jwt');
-
-  // req.session.destroy((err) => {
-  //   if (err) {
-  //     const error: Error = err;
-  //     console.log(err);
-  //     return new AppError(error.message, 500);
-  //   }
-  //   res.clearCookie(process.env.EXPRESS_SESSION_NAME ?? 'sid');
-  // });
   res.status(200).json({ success: true });
 };
 
@@ -121,7 +129,7 @@ export const protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await verifyToken(token, process.env.JWT_SECRET ?? '');
+  const decoded = await verifyToken(token);
 
   // 3) Check if user still exists
   const currentUser = await UserModel.findById(decoded.id);
@@ -151,10 +159,7 @@ export const protect = catchAsync(async (req, res, next) => {
 export const isLoggedIn = catchAsync(async (req, res, next) => {
   if (req.cookies.jwt) {
     // 1) verify token
-    const decoded = await verifyToken(
-      req.cookies.jwt,
-      process.env.JWT_SECRET ?? ''
-    );
+    const decoded = await verifyToken(req.cookies.jwt);
 
     // 2) Check if user still exists
     const currentUser = await UserModel.findById(decoded.id);
@@ -508,7 +513,6 @@ export const googleLogin = catchAsync(async (req, res, next) => {
   }
   let user = await UserModel.findOne({ googleId: tokenPayload?.sub });
   if (user) {
-    req.session.user = user.id;
     createSendToken(user, 200, res);
   } else {
     const isEmailAlreadyRegistered = await UserModel.findOne({
@@ -529,7 +533,6 @@ export const googleLogin = catchAsync(async (req, res, next) => {
       }).save({ validateBeforeSave: false });
       user = newUser;
     }
-    req.session.user = user.id;
     createSendToken(user, 200, res);
   }
 });
@@ -577,7 +580,6 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
         if (credentials) {
           console.log('getTokenAsync', credentials);
           oauth2Client.setCredentials(credentials);
-          // req.session.user = credentials.refresh_token as string;
           resolve(credentials);
         }
       });
@@ -610,7 +612,6 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
     const tokenPayload = loginTicket.getPayload();
     let user = await UserModel.findOne({ googleId: tokenPayload?.sub });
     if (user) {
-      // req.session.user = user.id;
       createSendToken(user, 200, res);
     } else {
       const isEmailAlreadyRegistered = await UserModel.findOne({
@@ -631,18 +632,9 @@ export const googleLoginCode = catchAsync(async (req, res, next) => {
         }).save({ validateBeforeSave: false });
         user = newUser;
       }
-      req.session.user = user.id;
-      console.log('user', user);
       createSendToken(user, 200, res);
     }
   }
-
-  // const jwtClient = new JWT({
-  //   email: tokenInfo.email,
-  //   // key: process.env.JWT_SECRET ?? 'secret',
-  //   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-  // });
-  //////////
 });
 
 const authController = {
