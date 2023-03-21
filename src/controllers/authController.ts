@@ -18,22 +18,34 @@ import { sendEmail } from '../utils/email';
 
 type JwtPayloadExtended = JwtPayload & { id: string };
 
-const signToken = (id: string) => {
+const signToken = async (id: string, jwtIdRaw: string) => {
+  const jwtIdHash = await crypto
+    .createHash('sha256')
+    .update(jwtIdRaw)
+    .digest('hex');
   return jwtSign({ id }, process.env.JWT_SECRET ?? '', {
     algorithm: 'HS256',
     expiresIn: process.env.JWT_EXPIRES_IN,
     issuer: process.env.JWT_ISSUER,
     subject: id.toString(),
-    jwtid: crypto.randomUUID(),
+    jwtid: jwtIdHash,
+    audience: 'Authentication',
   });
 };
 
-const createSendToken = (
+const createSendToken = async (
   user: HydratedDocument<User>,
   statusCode: number,
   res: Response
 ) => {
-  const token = signToken(user._id as unknown as string);
+  const jwtId = crypto.randomBytes(16).toString('hex');
+  res.cookie('fgp', jwtId, {
+    maxAge: Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  const token = await signToken(user._id as unknown as string, jwtId);
   const cookieOptions: CookieOptions = {
     expires: new Date(
       Date.now() +
@@ -57,8 +69,12 @@ const createSendToken = (
   });
 };
 
-const verifyToken = async (token: string): Promise<JwtPayloadExtended> => {
+const verifyToken = async (
+  token: string,
+  jwtId: string
+): Promise<JwtPayloadExtended> => {
   return new Promise((resolve, reject) => {
+    const jwtIdHash = crypto.createHash('sha256').update(jwtId).digest('hex');
     jwtVerify(
       token,
       process.env.JWT_SECRET ?? '',
@@ -66,6 +82,8 @@ const verifyToken = async (token: string): Promise<JwtPayloadExtended> => {
         maxAge: process.env.JWT_EXPIRES_IN,
         algorithms: ['HS256'],
         issuer: process.env.JWT_ISSUER,
+        jwtid: jwtIdHash,
+        audience: 'Authentication',
       },
       (err, decoded) => {
         if (err) return reject(err);
@@ -107,6 +125,7 @@ export const login = catchAsync(async (req, res, next) => {
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie('jwt');
+  res.clearCookie('fgp');
   res.status(200).json({ success: true });
 };
 
@@ -129,7 +148,7 @@ export const protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await verifyToken(token);
+  const decoded = await verifyToken(token, req.cookies.fgp);
 
   // 3) Check if user still exists
   const currentUser = await UserModel.findById(decoded.id);
@@ -159,7 +178,7 @@ export const protect = catchAsync(async (req, res, next) => {
 export const isLoggedIn = catchAsync(async (req, res, next) => {
   if (req.cookies.jwt) {
     // 1) verify token
-    const decoded = await verifyToken(req.cookies.jwt);
+    const decoded = await verifyToken(req.cookies.jwt, req.cookies.fgp);
 
     // 2) Check if user still exists
     const currentUser = await UserModel.findById(decoded.id);
