@@ -1,21 +1,21 @@
-declare module 'perfect-express-sanitizer' {
-  function prepareSanitize(
-    data: any,
-    options?: {
-      xss: boolean;
-      sql: boolean;
-      noSql: boolean;
-      sqlLevel: number;
-      noSqlLevel: number;
-      level: any;
-    }
-  ): any;
-  function clean(
-    options?: object,
-    whiteList?: any[],
-    only?: string[]
-  ): (req: any, res: any, next: any) => void;
-}
+// declare module 'perfect-express-sanitizer' {
+//   function prepareSanitize(
+//     data: any,
+//     options?: {
+//       xss: boolean;
+//       sql: boolean;
+//       noSql: boolean;
+//       sqlLevel: number;
+//       noSqlLevel: number;
+//       level: any;
+//     }
+//   ): any;
+//   function clean(
+//     options?: object,
+//     whiteList?: any[],
+//     only?: string[]
+//   ): (req: any, res: any, next: any) => void;
+// }
 
 interface Files {
   imageCover?: Express.Multer.File[];

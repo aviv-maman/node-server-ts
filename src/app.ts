@@ -8,7 +8,7 @@ import morgan from 'morgan';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
-import sanitizer from 'perfect-express-sanitizer';
+// import sanitizer from 'perfect-express-sanitizer';
 import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -67,16 +67,16 @@ app.use(cookieParser());
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
-// Data sanitization against XSS
-app.use(
-  sanitizer.clean({
-    xss: true,
-    noSql: true,
-    sql: true,
-    sqlLevel: 5,
-    noSqlLevel: 5,
-  })
-);
+// Data sanitization against XSS [DISABLED until security issue is resolved]
+// app.use(
+//   sanitizer.clean({
+//     xss: true,
+//     noSql: true,
+//     sql: true,
+//     sqlLevel: 5,
+//     noSqlLevel: 5,
+//   })
+// );
 
 // Prevent parameter pollution
 app.use(
