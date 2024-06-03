@@ -19,7 +19,7 @@ Server written in TypeScript and built with Node.js, Express, MongoDB and Mongoo
 1. Clone the repository
 
 ```
-git clone https://github.com/aviv-maman/moviesdb
+git clone https://github.com/aviv-maman/node-server-ts
 ```
 
 2. Create a `.env` file and fill in the required environment variables according to the next steps.
